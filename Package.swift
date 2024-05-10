@@ -1,10 +1,10 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 5.9
 import PackageDescription
 
 let package = Package(
     name: "file-manager-kit",
     platforms: [
-        .macOS(.v10_15),
+        .macOS(.v13),
     ],
     products: [
         .library(name: "FileManagerKit", targets: ["FileManagerKit"]),

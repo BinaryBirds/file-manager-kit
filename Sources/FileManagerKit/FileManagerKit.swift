@@ -4,10 +4,6 @@ extension FileManager {
 
     // MARK: - exists
 
-    public static var currentDirectory: URL {
-        URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-    }
-
     public func exists(
         at url: URL
     ) -> Bool {
@@ -39,12 +35,12 @@ extension FileManager {
         at url: URL
     ) -> Bool {
         #if os(iOS) || os(macOS) || os(tvOS) || os(watchOS)
-            let resourceValues = try! url.resourceValues(
-                forKeys: [.isSymbolicLinkKey]
-            )
-            if let isSymbolicLink = resourceValues.isSymbolicLink {
-                return isSymbolicLink
-            }
+        let resourceValues = try? url.resourceValues(
+            forKeys: [.isSymbolicLinkKey]
+        )
+        if let isSymbolicLink = resourceValues?.isSymbolicLink {
+            return isSymbolicLink
+        }
         #endif
         return false
     }
@@ -180,7 +176,9 @@ extension FileManager {
 
     public func creationDate(at url: URL) throws -> Date {
         let attr = try attributes(at: url)
-        return attr[.creationDate] as! Date
+        // TODO: better fix for this
+        // On Linux, we return the modification date, since no .creationDate
+        return attr[.creationDate] as? Date ?? attr[.modificationDate] as! Date
     }
 
     public func modificationDate(at url: URL) throws -> Date {
