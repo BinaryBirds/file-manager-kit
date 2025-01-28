@@ -25,7 +25,7 @@ and to your application target, add `FileManagerKit` to your dependencies:
 Example `Package.swift` file with `FileManagerKit` as a dependency:
 
 ```swift
-// swift-tools-version:5.10
+// swift-tools-version:6.0
 import PackageDescription
 
 let package = Package(

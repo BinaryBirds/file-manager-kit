@@ -1,4 +1,5 @@
 SHELL=/bin/bash
+.PHONY: docker
 
 build:
 	swift build
@@ -20,3 +21,6 @@ check:
 
 format:
 	./scripts/run-swift-format.sh --fix
+
+docker:
+	docker build -t file-manager-kit-image . -f ./Docker/Dockerfile.ubuntu && docker run --rm file-manager-kit-image
