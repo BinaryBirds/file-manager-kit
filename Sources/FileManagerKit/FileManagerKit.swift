@@ -1,8 +1,4 @@
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
 import Foundation
-#endif
 
 public protocol FileManagerKit {
 
@@ -27,9 +23,13 @@ public protocol FileManagerKit {
     ) throws
     
     func listDirectory(
-        at url: URL,
-        includingHiddenItems: Bool
+        at url: URL
     ) -> [String]
+    
+    func createFile(
+        at url: URL,
+        contents: Data
+    ) throws
     
     func copy(
         from source: URL,
@@ -79,5 +79,4 @@ public protocol FileManagerKit {
     func modificationDate(
         at url: URL
     ) throws -> Date
-    
 }

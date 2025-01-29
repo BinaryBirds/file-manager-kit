@@ -5,7 +5,18 @@ import Foundation
 #endif
 
 extension FileManager {
+    
+    public func createFile(
+        at url: URL,
+        contents data: Data
+    ) throws {
+//        fatalError("Not implemented")
+        createFile(atPath: url.path(), contents: data)
+    }
+}
 
+extension FileManager: FileManagerKit {
+    
     // MARK: - exists
 
     public func exists(
