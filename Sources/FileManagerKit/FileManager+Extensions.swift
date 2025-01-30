@@ -1,28 +1,13 @@
 import Foundation
+
 #if os(Linux)
 import Glibc
 #else
 import Darwin
 #endif
 
-extension FileManager {
-    
-    public func createFile(
-        at url: URL,
-        contents data: Data?
-    ) throws {
-        guard createFile(
-            atPath: url.path(),
-            contents: data,
-            attributes: nil
-        ) else {
-            throw CocoaError(.fileWriteUnknown)
-        }
-    }
-}
-
 extension FileManager: FileManagerKit {
-    
+
     // MARK: - exists
 
     public func exists(at url: URL) -> Bool {
@@ -44,10 +29,12 @@ extension FileManager: FileManagerKit {
         }
         return false
     }
-    
+
     public func linkExists(at url: URL) -> Bool {
         #if os(iOS) || os(macOS) || os(tvOS) || os(watchOS)
-        let resourceValues = try? url.resourceValues(forKeys: [.isSymbolicLinkKey])
+        let resourceValues = try? url.resourceValues(forKeys: [
+            .isSymbolicLinkKey
+        ])
         if let isSymbolicLink = resourceValues?.isSymbolicLink {
             return isSymbolicLink
         }
@@ -85,30 +72,31 @@ extension FileManager: FileManagerKit {
         )
     }
 
-    public func copy(
-        from source: URL,
-        to destination: URL
-    ) throws {
+    public func createFile(at url: URL, contents data: Data?) throws {
+        guard
+            createFile(
+                atPath: url.path(),
+                contents: data,
+                attributes: nil
+            )
+        else {
+            throw CocoaError(.fileWriteUnknown)
+        }
+    }
+
+    public func copy(from source: URL, to destination: URL) throws {
         try copyItem(at: source, to: destination)
     }
 
-    public func move(
-        from source: URL,
-        to destination: URL
-    ) throws {
+    public func move(from source: URL, to destination: URL) throws {
         try moveItem(at: source, to: destination)
     }
 
-    public func link(
-        from source: URL,
-        to destination: URL
-    ) throws {
+    public func link(from source: URL, to destination: URL) throws {
         try createSymbolicLink(at: destination, withDestinationURL: source)
     }
 
-    public func delete(
-        at url: URL
-    ) throws {
+    public func delete(at url: URL) throws {
         try removeItem(at: url)
     }
 
@@ -127,16 +115,11 @@ extension FileManager: FileManagerKit {
 
     // MARK: - permission
 
-    public func setPermissions(
-        _ permission: Int,
-        at url: URL
-    ) throws {
+    public func setPermissions(_ permission: Int, at url: URL) throws {
         try setAttributes([.posixPermissions: permission], at: url)
     }
 
-    public func permissions(
-        at url: URL
-    ) throws -> Int {
+    public func permissions(at url: URL) throws -> Int {
         let attributes = try attributes(at: url)
         return attributes[.posixPermissions] as! Int
     }

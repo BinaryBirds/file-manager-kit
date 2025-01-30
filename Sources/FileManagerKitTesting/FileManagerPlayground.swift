@@ -1,39 +1,39 @@
 import Foundation
 
 private protocol Buildable {
-    
+
     func build(in path: URL, using fileManager: FileManager) throws
 }
 
-public struct File : ExpressibleByStringLiteral, Buildable {
+public struct File: ExpressibleByStringLiteral, Buildable {
     private let name: String
-    private let attributes: [FileAttributeKey : Any]?
+    private let attributes: [FileAttributeKey: Any]?
     private let contents: Data?
-    
+
     public init(
         _ name: String,
-        attributes: [FileAttributeKey : Any]? = nil,
+        attributes: [FileAttributeKey: Any]? = nil,
         contents: Data? = nil
     ) {
         self.name = name
         self.attributes = attributes
         self.contents = contents
     }
-    
+
     public init(
         _ name: String,
-        attributes: [FileAttributeKey : Any]? = nil,
+        attributes: [FileAttributeKey: Any]? = nil,
         string: String? = nil
     ) {
         self.name = name
         self.attributes = attributes
         self.contents = string?.data(using: .utf8)
     }
-    
+
     public init(stringLiteral value: String) {
         self.init(value, contents: nil)
     }
-    
+
     func build(
         in url: URL,
         using fileManager: FileManager
@@ -46,15 +46,15 @@ public struct File : ExpressibleByStringLiteral, Buildable {
     }
 }
 
-public struct SymbolicLink : Buildable {
+public struct SymbolicLink: Buildable {
     fileprivate let name: String
     private let destination: String
-    
+
     public init(_ name: String, destination: String) {
         self.name = name
         self.destination = destination
     }
-    
+
     fileprivate func build(
         in url: URL,
         using fileManager: FileManager
@@ -68,30 +68,31 @@ public struct SymbolicLink : Buildable {
     }
 }
 
-public struct Directory : Buildable {
+public struct Directory: Buildable {
     fileprivate let name: String
-    private let attributes: [FileAttributeKey : Any]?
+    private let attributes: [FileAttributeKey: Any]?
     private let contents: [FileManagerPlayground.Item]
-    
+
     public init(
         _ name: String,
-        attributes: [FileAttributeKey : Any]? = nil,
-        @FileManagerPlayground.DirectoryBuilder _ contentsClosure: () -> [FileManagerPlayground.Item]
+        attributes: [FileAttributeKey: Any]? = nil,
+        @FileManagerPlayground.DirectoryBuilder _ contentsClosure: () ->
+            [FileManagerPlayground.Item]
     ) {
         self.name = name
         self.attributes = attributes
         self.contents = contentsClosure()
     }
-    
+
     public init(
         _ name: String,
-        attributes: [FileAttributeKey : Any]? = nil
+        attributes: [FileAttributeKey: Any]? = nil
     ) {
         self.name = name
         self.attributes = attributes
         self.contents = []
     }
-    
+
     func build(
         in url: URL,
         using fileManager: FileManager
@@ -109,60 +110,60 @@ public struct Directory : Buildable {
 }
 
 public struct FileManagerPlayground {
-    
+
     public enum Item: Buildable {
         case file(File)
         case directory(Directory)
         case symbolicLink(SymbolicLink)
-        
+
         func build(
             in path: URL,
             using fileManager: FileManager
         ) throws {
             switch self {
-            case let .file(file):
+            case .file(let file):
                 try file.build(in: path, using: fileManager)
-            case let .directory(dir):
+            case .directory(let dir):
                 try dir.build(in: path, using: fileManager)
-            case let .symbolicLink(symlink):
+            case .symbolicLink(let symlink):
                 try symlink.build(in: path, using: fileManager)
             }
         }
     }
-    
+
     @resultBuilder
     public enum DirectoryBuilder {
-        
+
         public static func buildBlock(_ components: Item...) -> [Item] {
             components
         }
-        
+
         public static func buildExpression(_ expression: File) -> Item {
             .file(expression)
         }
-        
+
         public static func buildExpression(_ expression: Directory) -> Item {
             .directory(expression)
         }
-        
+
         public static func buildExpression(_ expression: SymbolicLink) -> Item {
             .symbolicLink(expression)
         }
     }
-    
+
     private let directory: Directory
-    
+
     public init(@DirectoryBuilder _ contentsClosure: () -> [Item]) {
         self.directory = .init(
             "FileManagerPlayground_\(UUID().uuidString)",
             contentsClosure
         )
     }
-    
+
     public init() {
         self.directory = .init("FileManagerPlayground_\(UUID().uuidString)", {})
     }
-    
+
     public func test(_ tester: (FileManager) throws -> Void) throws {
         let fileManager = FileManager()
         let tempDir = fileManager.temporaryDirectory
