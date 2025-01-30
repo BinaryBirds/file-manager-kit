@@ -2,33 +2,27 @@ import Foundation
 
 public protocol FileManagerKit {
 
-    func exists(
-        at url: URL
-    ) -> Bool
+    var currentDirectoryPath: String { get }
+
+    var homeDirectoryForCurrentUser: URL { get }
+
+    var temporaryDirectory: URL { get }
     
-    func directoryExists(
-        at url: URL
-    ) -> Bool
+    func exists(at url: URL) -> Bool
     
-    func fileExists(
-        at url: URL
-    ) -> Bool
+    func directoryExists(at url: URL) -> Bool
     
-    func linkExists(
-        at url: URL
-    ) -> Bool
+    func fileExists(at url: URL) -> Bool
     
-    func createDirectory(
-        at url: URL
-    ) throws
+    func linkExists(at url: URL) -> Bool
     
-    func listDirectory(
-        at url: URL
-    ) -> [String]
+    func createDirectory(at url: URL) throws
+    
+    func listDirectory(at url: URL) -> [String]
     
     func createFile(
         at url: URL,
-        contents: Data
+        contents: Data?
     ) throws
     
     func copy(
@@ -46,13 +40,9 @@ public protocol FileManagerKit {
         to destination: URL
     ) throws
 
-    func delete(
-        at url: URL
-    ) throws
+    func delete(at url: URL) throws
     
-    func attributes(
-        at url: URL
-    ) throws -> [FileAttributeKey: Any]
+    func attributes(at url: URL) throws -> [FileAttributeKey: Any]
 
     func setAttributes(
         _ attributes: [FileAttributeKey: Any],
@@ -64,19 +54,11 @@ public protocol FileManagerKit {
         at url: URL
     ) throws
 
-    func permissions(
-        at url: URL
-    ) throws -> Int
+    func permissions(at url: URL) throws -> Int
     
-    func size(
-        at url: URL
-    ) throws -> UInt64
+    func size(at url: URL) throws -> UInt64
     
-    func creationDate(
-        at url: URL
-    ) throws -> Date
+    func creationDate(at url: URL) throws -> Date
 
-    func modificationDate(
-        at url: URL
-    ) throws -> Date
+    func modificationDate(at url: URL) throws -> Date
 }

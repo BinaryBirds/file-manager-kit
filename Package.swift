@@ -11,7 +11,14 @@ let package = Package(
         .visionOS(.v1),
     ],
     products: [
-        .library(name: "FileManagerKit", targets: ["FileManagerKit"]),
+        .library(
+            name: "FileManagerKit",
+            targets: ["FileManagerKit"]
+        ),
+        .library(
+            name: "FileManagerKitTesting",
+            targets: ["FileManagerKitTesting"]
+        ),
     ],
     dependencies: [
       
@@ -26,10 +33,20 @@ let package = Package(
                 .enableExperimentalFeature("StrictConcurrency=complete"),
             ]
         ),
+        .target(
+            name: "FileManagerKitTesting",
+            dependencies: [
+                
+            ],
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency=complete"),
+            ]
+        ),
         .testTarget(
             name: "FileManagerKitTests",
             dependencies: [
-                .target(name: "FileManagerKit")
+                .target(name: "FileManagerKit"),
+                .target(name: "FileManagerKitTesting")
             ]
         ),
     ]

@@ -1,17 +1,23 @@
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
 import Foundation
+#if os(Linux)
+import Glibc
+#else
+import Darwin
 #endif
 
 extension FileManager {
     
     public func createFile(
         at url: URL,
-        contents data: Data
+        contents data: Data?
     ) throws {
-//        fatalError("Not implemented")
-        createFile(atPath: url.path(), contents: data)
+        guard createFile(
+            atPath: url.path(),
+            contents: data,
+            attributes: nil
+        ) else {
+            throw CocoaError(.fileWriteUnknown)
+        }
     }
 }
 
@@ -19,15 +25,11 @@ extension FileManager: FileManagerKit {
     
     // MARK: - exists
 
-    public func exists(
-        at url: URL
-    ) -> Bool {
+    public func exists(at url: URL) -> Bool {
         fileExists(atPath: url.path)
     }
 
-    public func directoryExists(
-        at url: URL
-    ) -> Bool {
+    public func directoryExists(at url: URL) -> Bool {
         var isDirectory = ObjCBool(false)
         if fileExists(atPath: url.path, isDirectory: &isDirectory) {
             return isDirectory.boolValue
@@ -35,26 +37,24 @@ extension FileManager: FileManagerKit {
         return false
     }
 
-    public func fileExists(
-        at url: URL
-    ) -> Bool {
-//        var isDirectory = ObjCBool(false)
-//        if fileExists(atPath: url.path, isDirectory: &isDirectory) {
-//            return !isDirectory.boolValue
-//        }
+    public func fileExists(at url: URL) -> Bool {
+        var isDirectory = ObjCBool(false)
+        if fileExists(atPath: url.path(), isDirectory: &isDirectory) {
+            return !isDirectory.boolValue
+        }
         return false
     }
-
-    // TODO: linux support
-    public func linkExists(
-        at url: URL
-    ) -> Bool {
+    
+    public func linkExists(at url: URL) -> Bool {
         #if os(iOS) || os(macOS) || os(tvOS) || os(watchOS)
-        let resourceValues = try? url.resourceValues(
-            forKeys: [.isSymbolicLinkKey]
-        )
+        let resourceValues = try? url.resourceValues(forKeys: [.isSymbolicLinkKey])
         if let isSymbolicLink = resourceValues?.isSymbolicLink {
             return isSymbolicLink
+        }
+        #else
+        var statInfo = stat()
+        if lstat(url.path, &statInfo) == 0 {
+            return (statInfo.st_mode & S_IFMT) == S_IFLNK
         }
         #endif
         return false
@@ -62,9 +62,7 @@ extension FileManager: FileManagerKit {
 
     // MARK: - contents
 
-    public func listDirectory(
-        at url: URL
-    ) -> [String] {
+    public func listDirectory(at url: URL) -> [String] {
         guard directoryExists(at: url) else {
             return []
         }
@@ -74,9 +72,7 @@ extension FileManager: FileManagerKit {
 
     // MARK: - operations
 
-    public func createDirectory(
-        at url: URL
-    ) throws {
+    public func createDirectory(at url: URL) throws {
         guard !directoryExists(at: url) else {
             return
         }
@@ -182,7 +178,6 @@ extension FileManager: FileManagerKit {
 
     public func creationDate(at url: URL) throws -> Date {
         let attr = try attributes(at: url)
-        // TODO: better fix for this
         // On Linux, we return the modification date, since no .creationDate
         return attr[.creationDate] as? Date ?? attr[.modificationDate] as! Date
     }

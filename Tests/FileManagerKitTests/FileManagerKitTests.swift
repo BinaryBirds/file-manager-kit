@@ -1,221 +1,579 @@
 import Foundation
 import Testing
 @testable import FileManagerKit
+import FileManagerKitTesting
 
-@Suite()
+@Suite(.serialized)
 struct FileManagerKitTestSuite {
-    
-    // TODO: where does this belong to?
-    
-    @Test
-    func listDirectory() throws {
-        let fileManager = FileManager.default
         
-        let tmpUrl = fileManager.temporaryDirectory
-        let workUrl = tmpUrl.appending(path: UUID().uuidString)
-        try fileManager.createDirectory(at: workUrl)
-        
-        let aUrl = workUrl.appending(path: "a")
-        try fileManager.createDirectory(at: aUrl)
-        
-        let bUrl = workUrl.appending(path: "b")
-        try fileManager.createDirectory(at: bUrl)
-        
-        let cUrl = workUrl.appending(path: "c")
-        try fileManager.createDirectory(at: cUrl)
-        
-        let fooUrl = workUrl.appending(path: ".foo")
-        try "foo".write(to: fooUrl, atomically: true, encoding: .utf8)
-        
-        let fooInAUrl = aUrl.appending(path: ".foo")
-        try "fooInA".write(to: fooInAUrl, atomically: true, encoding: .utf8)
-        
-        let items = fileManager.listDirectory(at: workUrl)
-        #expect(items == ["a", ".foo", "c", "b"])
-    }
-    
-//    let fileManager: FileManagerKit = MockFileManager()
-    let fileManager: FileManagerKit = FileManager.default
-    
-    let fileUrl = URL(string: "/path/to/file")!
-    let folderUrl = URL(string: "/path/to/folder")!
-    let pathToNonExistentFile = URL(string: "/path/to/nonexistent")!
-    let data = Data("Hello".utf8)
-    
     // MARK: - exists(at:) Tests
-
+    
     @Test
-    func testExists_whenFileExists() throws {
-        do {
-            try fileManager.createFile(at: fileUrl, contents: data)
+    func exists_whenFileExists() throws {
+        try FileManagerPlayground {
+            Directory("foo") {
+                "bar"
+            }
+        }.test { fileManager in
+            let url = URL(fileURLWithPath: "./foo/bar")
             
+            #expect(fileManager.exists(at: url))
         }
-        catch {
-            print("????????")
-            print(error)
-            print(error)
-        }
-        #expect(fileManager.exists(at: fileUrl))
     }
     
     @Test
-    func testExists_whenFileDoesNotExist() throws {
-        #expect(!fileManager.exists(at: pathToNonExistentFile))
+    func exists_whenFileDoesNotExist() throws {
+        try FileManagerPlayground().test {
+            let url = URL(fileURLWithPath: "./does/not/exist")
+            
+            #expect(!$0.exists(at: url))
+        }
     }
     
     // MARK: - fileExists(at:) Tests
-
+    
     @Test
-    func testFileExists_whenFileExists() throws {
-        try fileManager.createFile(at: fileUrl, contents: data)
-        #expect(fileManager.fileExists(at: fileUrl))
+    func fileExists_whenFileExists() throws {
+        try FileManagerPlayground {
+            Directory("foo") {
+                "bar"
+            }
+        }.test { fileManager in
+            let url = URL(fileURLWithPath: "./foo/bar")
+            
+            #expect(fileManager.fileExists(at: url))
+        }
     }
-
+    
     @Test
-    func testFileExists_whenPathIsFolder() throws {
-        try fileManager.createDirectory(at: folderUrl)
-        #expect(!fileManager.fileExists(at: folderUrl))
+    func fileExists_whenFolderExists() throws {
+        try FileManagerPlayground {
+            Directory("foo") {
+                Directory("bar")
+            }
+        }.test { fileManager in
+            let url = URL(fileURLWithPath: "./foo/bar")
+            
+            #expect(!fileManager.fileExists(at: url))
+        }
     }
-
+    
     @Test
-    func testFileExists_whenFileDoesNotExist() throws {
-        #expect(!fileManager.fileExists(at: fileUrl))
+    func fileExists_whenFileDoesNotExist() throws {
+        try FileManagerPlayground().test {
+            let url = URL(fileURLWithPath: "./does/not/exist")
+            
+            #expect(!$0.fileExists(at: url))
+        }
     }
     
     // MARK: - directoryExists(at:) Tests
     
     @Test
-    func testDirectoryExists_whenDirectoryExists() throws {
-        try fileManager.createDirectory(at: folderUrl)
-        #expect(fileManager.directoryExists(at: folderUrl))
+    func directoryExists_whenDirectoryExists() throws {
+        try FileManagerPlayground {
+            Directory("foo") {
+                "bar"
+            }
+        }.test { fileManager in
+            let url = URL(fileURLWithPath: "./foo")
+            
+            #expect(fileManager.directoryExists(at: url))
+        }
     }
-
+    
     @Test
-    func testDirectoryExists_whenPathIsFile() throws {
-        try fileManager.createFile(at: fileUrl, contents: data)
-        #expect(!fileManager.directoryExists(at: fileUrl))
+    func directoryExists_whenFileExists() throws {
+        try FileManagerPlayground {
+            Directory("foo") {
+                "bar"
+            }
+        }.test { fileManager in
+            let url = URL(fileURLWithPath: "./foo/bar")
+            
+            #expect(!fileManager.directoryExists(at: url))
+        }
     }
-
+    
     @Test
-    func testDirectoryExists_whenDirectoryDoesNotExist() throws {
-        #expect(!fileManager.directoryExists(at: folderUrl))
+    func directoryExists_whenDirectoryDoesNotExist() throws {
+        try FileManagerPlayground().test {
+            let url = URL(fileURLWithPath: "./does/not/exist")
+            
+            #expect(!$0.directoryExists(at: url))
+        }
     }
     
     // MARK: - createFile(at:) Tests
     
     @Test
-    func testCreateFile_whenCreatesFileSuccessfully() throws {
-        try fileManager.createFile(at: fileUrl, contents: data)
-        #expect(fileManager.fileExists(at: fileUrl))
-    }
-
-    @Test
-    func testCreateFile_whenFileAlreadyExists() throws {
-        try fileManager.createFile(at: fileUrl, contents: data)
-
-        #expect(throws: MockFileManager.Error.itemAlreadyExists, performing: {
-            try fileManager.createFile(at: fileUrl, contents: data)
-        })
-        #expect(performing: {
-            try fileManager.createFile(at: fileUrl, contents: data)
-        }, throws: { error in
-            #expect(error is NSError)
-            return true
+    func createFile_whenCreatesFileSuccessfully() throws {
+        try FileManagerPlayground().test { fileManager in
+            let url = URL(fileURLWithPath: "./foo")
+            try fileManager.createFile(at: url, contents: nil)
             
-            // TODO: check error
-        })
-//        #expect(throws: NSError) {
-//            try fileManager.createFile(at: fileUrl, contents: data)
-//        }
-        
-//        XCTAssertThrowsError(try mockFileManager.createFile(at: fileURL, contents: Data("World".utf8))) { error in
-//            XCTAssertEqual((error as NSError).code, 516) // File exists
-//        }
+            #expect(fileManager.fileExists(at: url))
+        }
+    }
+    
+    @Test
+    func createFile_whenIntermediateDirectoriesMissing() throws {
+        try FileManagerPlayground().test { fileManager in
+            let url = URL(fileURLWithPath: "./foo/bar/baz")
+            
+            #expect(throws: CocoaError(.fileWriteUnknown), performing: {
+                try fileManager.createFile(at: url, contents: nil)
+            })
+        }
+    }
+    
+    @Test
+    func createFile_whenFileAlreadyExists() throws {
+        try FileManagerPlayground {
+            Directory("foo") {
+                "bar"
+            }
+        }.test { fileManager in
+            let url = URL(fileURLWithPath: "./foo/bar")
+            let dataToWrite = "data".data(using: .utf8)
+            try fileManager.createFile(at: url, contents: dataToWrite)
+            let data = fileManager.contents(atPath: url.path())
+            
+            #expect(dataToWrite == data)
+        }
     }
     
     // MARK: - createDirectory(at:) Tests
-
+    
     @Test
-    func testCreateDirectory_whenCreatesDirectorySuccessfully() throws {
-        try fileManager.createDirectory(at: folderUrl)
-        #expect(fileManager.directoryExists(at: folderUrl))
-    }
-
-    @Test
-    func testCreateDirectory_whenDirectoryAlreadyExists() throws {
-        try fileManager.createDirectory(at: folderUrl)
-
-        #expect(performing: {
-            try fileManager.createDirectory(at: folderUrl)
-        }, throws: { error in
-            #expect(error is NSError)
-            return true
+    func createDirectory_whenCreatesDirectorySuccessfully() throws {
+        try FileManagerPlayground().test { fileManager in
+            let url = URL(fileURLWithPath: "./foo")
+            try fileManager.createDirectory(at: url)
             
-            // TODO: check error
-        })
-//        XCTAssertThrowsError() { error in
-//            XCTAssertEqual((error as NSError).code, 516) // Directory exists
-//        }
+            #expect(fileManager.directoryExists(at: url))
+        }
+    }
+    
+    @Test
+    func createDirectory_whenDirectoryAlreadyExists() throws {
+        try FileManagerPlayground {
+            Directory("foo") {
+                Directory("bar")
+            }
+        }.test { fileManager in
+            let url = URL(fileURLWithPath: "./foo/bar")
+            try fileManager.createDirectory(at: url)
+            
+            #expect(fileManager.directoryExists(at: url))
+        }
     }
     
     // MARK: - delete(at:) Tests
-
+    
     @Test
-    func testDelete_whenFileExists() throws {
-        try fileManager.createFile(at: fileUrl, contents: data)
-
-        try fileManager.delete(at: fileUrl)
-        #expect(!fileManager.fileExists(at: fileUrl))
-    }
-
-    @Test
-    func testDelete_whenDirectoryExists() throws {
-        try fileManager.createDirectory(at: folderUrl)
-        try fileManager.delete(at: folderUrl)
-        #expect(!fileManager.directoryExists(at: folderUrl))
-    }
-
-    @Test
-    func testDelete_whenPathDoesNotExist() throws {
-        try fileManager.createDirectory(at: folderUrl)
-
-        #expect(performing: {
-            try fileManager.delete(at: pathToNonExistentFile)
-        }, throws: { error in
-            #expect(error is NSError)
-            return true
+    func delete_whenFileExists() throws {
+        try FileManagerPlayground {
+            Directory("foo") {
+                "bar"
+            }
+        }.test { fileManager in
+            let url = URL(fileURLWithPath: "./foo/bar")
+            try fileManager.delete(at: url)
             
-            // TODO: check error
-        })
-//        XCTAssertThrowsError() { error in
-//            XCTAssertEqual((error as NSError).code, 4) // File not found
-//        }
+            #expect(!fileManager.fileExists(at: url))
+        }
+    }
+    
+    @Test
+    func delete_whenDirectoryExists() throws {
+        try FileManagerPlayground {
+            Directory("foo")
+        }.test { fileManager in
+            let url = URL(fileURLWithPath: "./foo")
+            try fileManager.delete(at: url)
+            
+            #expect(!fileManager.directoryExists(at: url))
+        }
+    }
+    
+    @Test
+    func delete_whenDirectoryDoesNotExist() throws {
+        try FileManagerPlayground().test { fileManager in
+            let url = URL(fileURLWithPath: "./foo")
+            
+            do {
+                try fileManager.delete(at: url)
+                #expect(Bool(false))
+            } catch let error as NSError {
+                #expect(error.domain == NSCocoaErrorDomain)
+                #expect(error.code == 4)
+            }
+        }
     }
     
     // MARK: - listDirectory(at:) Tests
+    
+    @Test
+    func listDirectory_whenDirectoryHasContent() throws {
+        try FileManagerPlayground {
+            Directory("a")
+            Directory("b")
+            Directory("c")
+            File(".foo", string: "foo")
+            "bar"
+            SymbolicLink("bar_link", destination: "bar")
+        }.test { fileManager in
+            let cwd = URL(string: ".")!
+            let items = fileManager.listDirectory(at: cwd).sorted()
+            #expect(items == [".foo", "a", "b", "bar", "bar_link", "c"])
+        }
+    }
+    
+    @Test
+    func listDirectory_whenDirectoryIsEmpty() throws {
+        try FileManagerPlayground {
+            Directory("foo")
+        }.test {
+            let url = URL(fileURLWithPath: "./foo")
+            let items = $0.listDirectory(at: url)
+            #expect(items == [])
+        }
+    }
+    
+    @Test
+    func listDirectory_whenPathIsNotDirectory() throws {
+        try FileManagerPlayground {
+            "foo"
+        }.test {
+            let url = URL(fileURLWithPath: "./foo")
+            let items = $0.listDirectory(at: url)
+            #expect(items == [])
+        }
+    }
+    
+    // MARK: - copy(from:to:) Tests
 
     @Test
-    func testListDirectory() throws {
-        try fileManager.createDirectory(at: folderUrl)
-        let file1Url = folderUrl.appendingPathComponent("file1.txt")
-        let file2Url = folderUrl.appendingPathComponent("file2.txt")
-        try fileManager.createFile(at: file1Url, contents: Data("File1".utf8))
-        try fileManager.createFile(at: file2Url, contents: Data("File2".utf8))
-        let items = fileManager.listDirectory(at: folderUrl)
-        #expect(items.sorted() == ["file1.txt", "file2.txt"].sorted())
+    func copy_whenSourceExists() throws {
+        try FileManagerPlayground {
+            "source"
+        }.test { fileManager in
+            let source = URL(fileURLWithPath: "./source")
+            let destination = URL(fileURLWithPath: "./destination")
+
+            try fileManager.copy(from: source, to: destination)
+
+            #expect(fileManager.fileExists(at: destination))
+            let originalData = fileManager.contents(atPath: source.path())
+            let copiedData = fileManager.contents(atPath: destination.path())
+            #expect(originalData == copiedData)
+        }
     }
 
     @Test
-    func testListDirectory_whenDirectoryIsEmpty() throws {
-        try fileManager.createDirectory(at: folderUrl)
-        let items = fileManager.listDirectory(at: folderUrl)
-        #expect(items == [])
+    func copy_whenSourceDoesNotExist() throws {
+        try FileManagerPlayground().test { fileManager in
+            let source = URL(fileURLWithPath: "./nonexistent")
+            let destination = URL(fileURLWithPath: "./destination")
+
+            do {
+                try fileManager.copy(from: source, to: destination)
+                #expect(Bool(false))
+            } catch let error as NSError {
+                #expect(error.domain == NSCocoaErrorDomain)
+                #expect(error.code == 260)
+            }
+        }
     }
 
     @Test
-    func testListDirectory_whenPathIsNotDirectory() throws {
-        try fileManager.createFile(at: fileUrl, contents: data)
-        let items = fileManager.listDirectory(at: fileUrl)
-        #expect(items == [])
+    func copy_whenDestinationAlreadyExists() throws {
+        try FileManagerPlayground {
+            "source"
+            "destination"
+        }.test { fileManager in
+            let source = URL(fileURLWithPath: "./source")
+            let destination = URL(fileURLWithPath: "./destination")
+
+            do {
+                try fileManager.copy(from: source, to: destination)
+                #expect(Bool(false))
+            } catch let error as NSError {
+                #expect(error.domain == NSCocoaErrorDomain)
+                #expect(error.code == 516)
+            }
+        }
+    }
+    
+    // MARK: - move(from:to:) Tests
+
+    @Test
+    func move_whenSourceExists() throws {
+        try FileManagerPlayground {
+            "source"
+        }.test { fileManager in
+            let source = URL(fileURLWithPath: "./source")
+            let destination = URL(fileURLWithPath: "./destination")
+
+            try fileManager.move(from: source, to: destination)
+
+            #expect(!fileManager.fileExists(at: source))
+            #expect(fileManager.fileExists(at: destination))
+        }
+    }
+
+    @Test
+    func move_whenSourceDoesNotExist() throws {
+        try FileManagerPlayground().test { fileManager in
+            let source = URL(fileURLWithPath: "./nonexistent")
+            let destination = URL(fileURLWithPath: "./destination")
+
+            do {
+                try fileManager.move(from: source, to: destination)
+                #expect(Bool(false))
+            } catch let error as NSError {
+                #expect(error.domain == NSCocoaErrorDomain)
+                #expect(error.code == 4)
+            }
+        }
+    }
+
+    @Test
+    func move_whenDestinationAlreadyExists() throws {
+        try FileManagerPlayground {
+            "source"
+            "destination"
+        }.test { fileManager in
+            let source = URL(fileURLWithPath: "./source")
+            let destination = URL(fileURLWithPath: "./destination")
+
+            do {
+                try fileManager.move(from: source, to: destination)
+                #expect(Bool(false))
+            } catch let error as NSError {
+                #expect(error.domain == NSCocoaErrorDomain)
+                #expect(error.code == 516)
+            }
+        }
+    }
+    
+    // MARK: - link(from:to:) Tests
+
+    @Test
+    func link_whenSourceExists() throws {
+        try FileManagerPlayground {
+            File("sourceFile", string: "Hello, world!")
+        }.test { fileManager in
+            let source = URL(fileURLWithPath: "./sourceFile")
+            let destination = URL(fileURLWithPath: "./destination")
+            try fileManager.link(from: source, to: destination)
+            let exists = fileManager.exists(at: destination)
+            let attributes = try fileManager.attributes(at: destination)
+            let fileType = attributes[.type] as? FileAttributeType
+
+            #expect(fileManager.linkExists(at: destination))
+            #expect(exists)
+            #expect(fileType == .typeSymbolicLink)
+        }
+    }
+
+    @Test
+    func link_whenSourceDoesNotExist() throws {
+        try FileManagerPlayground().test { fileManager in
+            let source = URL(fileURLWithPath: "./missingSource")
+            let destination = URL(fileURLWithPath: "./destination")
+            try fileManager.link(from: source, to: destination)
+            let attributes = try fileManager.attributes(at: destination)
+            let fileType = attributes[.type] as? FileAttributeType
+
+            #expect(fileType == .typeSymbolicLink)
+
+            #expect(fileManager.linkExists(at: destination))
+
+            
+            // Check that resolving the symlink gives the expected (absolute) path
+            let resolvedPath = try fileManager.destinationOfSymbolicLink(atPath: destination.path())
+            #expect(URL(fileURLWithPath: resolvedPath).lastPathComponent == source.lastPathComponent)
+
+            // Check that the target file does not exist (dangling link)
+            #expect(!fileManager.fileExists(atPath: resolvedPath))
+        }
+    }
+
+    @Test
+    func link_whenDestinationAlreadyExists() throws {
+        try FileManagerPlayground {
+            "source"
+            "destination"
+        }.test { fileManager in
+            let source = URL(fileURLWithPath: "./source")
+            let destination = URL(fileURLWithPath: "./destination")
+
+            do {
+                try fileManager.link(from: source, to: destination)
+                #expect(Bool(false))
+            } catch let error as NSError {
+                #expect(error.domain == NSCocoaErrorDomain)
+                #expect(error.code == 516)
+            }
+        }
+    }
+    
+    // MARK: - creationDate(at:) Tests
+
+    @Test
+    func creationDate_whenFileExists() throws {
+        try FileManagerPlayground {
+            "file"
+        }.test { fileManager in
+            let file = URL(fileURLWithPath: "./file")
+
+            let creationDate = try fileManager.creationDate(at: file)
+            let attributes = try fileManager.attributesOfItem(atPath: file.path())
+
+            #expect(creationDate == (attributes[.creationDate] as? Date ?? attributes[.modificationDate] as! Date))
+        }
+    }
+
+    @Test
+    func creationDate_whenFileDoesNotExist() throws {
+        try FileManagerPlayground().test { fileManager in
+            let file = URL(fileURLWithPath: "./nonexistent")
+
+            do {
+                _ = try fileManager.creationDate(at: file)
+                #expect(Bool(false))
+            } catch let error as NSError {
+                #expect(error.domain == NSCocoaErrorDomain)
+                #expect(error.code == 260)
+            }
+        }
+    }
+
+    // MARK: - modificationDate(at:) Tests
+
+    @Test
+    func modificationDate_whenFileExists() throws {
+        try FileManagerPlayground {
+            "file"
+        }.test { fileManager in
+            let file = URL(fileURLWithPath: "./file")
+
+            let modificationDate = try fileManager.modificationDate(at: file)
+            let attributes = try fileManager.attributesOfItem(atPath: file.path())
+
+            #expect(modificationDate == attributes[.modificationDate] as? Date)
+        }
+    }
+
+    @Test
+    func modificationDate_whenFileDoesNotExist() throws {
+        try FileManagerPlayground().test { fileManager in
+            let file = URL(fileURLWithPath: "./nonexistent")
+
+            do {
+                _ = try fileManager.modificationDate(at: file)
+                #expect(Bool(false))
+            } catch let error as NSError {
+                #expect(error.domain == NSCocoaErrorDomain)
+                #expect(error.code == 260)
+            }
+        }
+    }
+    
+    // MARK: - size(at:) Tests
+
+    @Test
+    func size_whenFileExists() throws {
+        try FileManagerPlayground {
+            let text = "Hello, world!"
+            File("file", string: text)
+        }.test { fileManager in
+            let file = URL(fileURLWithPath: "./file")
+
+            let fileSize = try fileManager.size(at: file)
+            let expectedSize = "Hello, world!".utf8.count
+
+            #expect(fileSize == expectedSize)
+        }
+    }
+
+    @Test
+    func size_whenFileDoesNotExist() throws {
+        try FileManagerPlayground().test { fileManager in
+            let file = URL(fileURLWithPath: "./nonexistent")
+            let size = try fileManager.size(at: file)
+            
+            #expect(size == 0)
+        }
+    }
+    
+    // MARK: - setAttributes(at:attributes:) Tests
+
+    @Test
+    func setAttributes_whenFileExists() throws {
+        try FileManagerPlayground {
+            "file"
+        }.test { fileManager in
+            let url = URL(fileURLWithPath: "./file")
+
+            let newDate = Date(timeIntervalSince1970: 10000)
+            let attributes: [FileAttributeKey: Any] = [
+                .modificationDate: newDate
+            ]
+            try fileManager.setAttributes(attributes, at: url)
+            let updatedAttributes = try fileManager.attributes(at: url)
+
+            #expect(updatedAttributes[.modificationDate] as? Date == newDate)
+        }
+    }
+
+    @Test
+    func setAttributes_whenFileDoesNotExist() throws {
+        try FileManagerPlayground().test { fileManager in
+            let url = URL(fileURLWithPath: "./nonexistent")
+
+            do {
+                let attributes: [FileAttributeKey: Any] = [.modificationDate: Date()]
+                try fileManager.setAttributes(attributes, at: url)
+                #expect(Bool(false))
+            } catch let error as NSError {
+                #expect(error.domain == NSCocoaErrorDomain)
+                #expect(error.code == 4)
+            }
+        }
+    }
+    
+    // MARK: - setPermissions(at:permissions:) Tests
+
+    @Test
+    func setPermissions_whenFileExists() throws {
+        try FileManagerPlayground {
+            "file"
+        }.test { fileManager in
+            let url = URL(fileURLWithPath: "./file")
+
+            let permissions = 600
+            try fileManager.setPermissions(permissions, at: url)
+            let updatedPermissions = try fileManager.permissions(at: url)
+
+            #expect(updatedPermissions == permissions)
+        }
+    }
+
+    @Test
+    func setPermissions_whenFileDoesNotExist() throws {
+        try FileManagerPlayground().test { fileManager in
+            let url = URL(fileURLWithPath: "./nonexistent")
+
+            do {
+                try fileManager.setPermissions(600, at: url)
+                #expect(Bool(false))
+            } catch let error as NSError {
+                #expect(error.domain == NSCocoaErrorDomain)
+                #expect(error.code == 4)
+            }
+        }
     }
 }
