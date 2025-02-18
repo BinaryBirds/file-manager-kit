@@ -16,8 +16,8 @@ struct FileManagerKitTestSuite {
                 "bar"
             }
         }
-        .test { fileManager in
-            let url = URL(fileURLWithPath: "./foo/bar")
+        .test { fileManager, rootUrl in
+            let url = rootUrl.appending(path: "foo/bar")
 
             #expect(fileManager.exists(at: url))
         }
@@ -27,8 +27,8 @@ struct FileManagerKitTestSuite {
     func exists_whenFileDoesNotExist() throws {
         try FileManagerPlayground()
             .test {
-                let url = URL(fileURLWithPath: "./does/not/exist")
-
+                let url = $1.appending(path: "does/not/exist")
+                
                 #expect(!$0.exists(at: url))
             }
     }
@@ -42,10 +42,10 @@ struct FileManagerKitTestSuite {
                 "bar"
             }
         }
-        .test { fileManager in
-            let url = URL(fileURLWithPath: "./foo/bar")
+        .test {
+            let url = $1.appending(path: "foo/bar")
 
-            #expect(fileManager.fileExists(at: url))
+            #expect($0.fileExists(at: url))
         }
     }
 
@@ -56,10 +56,10 @@ struct FileManagerKitTestSuite {
                 Directory("bar")
             }
         }
-        .test { fileManager in
-            let url = URL(fileURLWithPath: "./foo/bar")
+        .test {
+            let url = $1.appending(path:  "foo/bar")
 
-            #expect(!fileManager.fileExists(at: url))
+            #expect(!$0.fileExists(at: url))
         }
     }
 
@@ -67,7 +67,7 @@ struct FileManagerKitTestSuite {
     func fileExists_whenFileDoesNotExist() throws {
         try FileManagerPlayground()
             .test {
-                let url = URL(fileURLWithPath: "./does/not/exist")
+                let url = $1.appending(path: "does/not/exist")
 
                 #expect(!$0.fileExists(at: url))
             }
@@ -82,10 +82,10 @@ struct FileManagerKitTestSuite {
                 "bar"
             }
         }
-        .test { fileManager in
-            let url = URL(fileURLWithPath: "./foo")
+        .test {
+            let url = $1.appending(path: "foo")
 
-            #expect(fileManager.directoryExists(at: url))
+            #expect($0.directoryExists(at: url))
         }
     }
 
@@ -96,10 +96,10 @@ struct FileManagerKitTestSuite {
                 "bar"
             }
         }
-        .test { fileManager in
-            let url = URL(fileURLWithPath: "./foo/bar")
+        .test {
+            let url = $1.appending(path: "foo/bar")
 
-            #expect(!fileManager.directoryExists(at: url))
+            #expect(!$0.directoryExists(at: url))
         }
     }
 
@@ -107,7 +107,7 @@ struct FileManagerKitTestSuite {
     func directoryExists_whenDirectoryDoesNotExist() throws {
         try FileManagerPlayground()
             .test {
-                let url = URL(fileURLWithPath: "./does/not/exist")
+                let url = $1.appending(path: "does/not/exist")
 
                 #expect(!$0.directoryExists(at: url))
             }
@@ -118,19 +118,19 @@ struct FileManagerKitTestSuite {
     @Test
     func createFile_whenCreatesFileSuccessfully() throws {
         try FileManagerPlayground()
-            .test { fileManager in
-                let url = URL(fileURLWithPath: "./foo")
-                try fileManager.createFile(at: url, contents: nil)
+            .test {
+                let url = $1.appending(path: "foo")
+                try $0.createFile(at: url, contents: nil)
 
-                #expect(fileManager.fileExists(at: url))
+                #expect($0.fileExists(at: url))
             }
     }
 
     @Test
     func createFile_whenIntermediateDirectoriesMissing() throws {
         try FileManagerPlayground()
-            .test { fileManager in
-                let url = URL(fileURLWithPath: "./foo/bar/baz")
+            .test { fileManager, rootUrl in
+                let url = rootUrl.appending(path: "foo/bar/baz")
 
                 #expect(
                     throws: CocoaError(.fileWriteUnknown),
@@ -148,11 +148,11 @@ struct FileManagerKitTestSuite {
                 "bar"
             }
         }
-        .test { fileManager in
-            let url = URL(fileURLWithPath: "./foo/bar")
+        .test {
+            let url = $1.appending(path: "foo/bar")
             let dataToWrite = "data".data(using: .utf8)
-            try fileManager.createFile(at: url, contents: dataToWrite)
-            let data = fileManager.contents(atPath: url.path())
+            try $0.createFile(at: url, contents: dataToWrite)
+            let data = $0.contents(atPath: url.path())
 
             #expect(dataToWrite == data)
         }
@@ -163,11 +163,11 @@ struct FileManagerKitTestSuite {
     @Test
     func createDirectory_whenCreatesDirectorySuccessfully() throws {
         try FileManagerPlayground()
-            .test { fileManager in
-                let url = URL(fileURLWithPath: "./foo")
-                try fileManager.createDirectory(at: url)
+            .test {
+                let url = $1.appending(path: "foo")
+                try $0.createDirectory(at: url)
 
-                #expect(fileManager.directoryExists(at: url))
+                #expect($0.directoryExists(at: url))
             }
     }
 
@@ -178,11 +178,11 @@ struct FileManagerKitTestSuite {
                 Directory("bar")
             }
         }
-        .test { fileManager in
-            let url = URL(fileURLWithPath: "./foo/bar")
-            try fileManager.createDirectory(at: url)
+        .test {
+            let url = $1.appending(path: "foo/bar")
+            try $0.createDirectory(at: url)
 
-            #expect(fileManager.directoryExists(at: url))
+            #expect($0.directoryExists(at: url))
         }
     }
 
@@ -195,11 +195,11 @@ struct FileManagerKitTestSuite {
                 "bar"
             }
         }
-        .test { fileManager in
-            let url = URL(fileURLWithPath: "./foo/bar")
-            try fileManager.delete(at: url)
+        .test {
+            let url = $1.appending(path: "foo/bar")
+            try $0.delete(at: url)
 
-            #expect(!fileManager.fileExists(at: url))
+            #expect(!$0.fileExists(at: url))
         }
     }
 
@@ -208,22 +208,22 @@ struct FileManagerKitTestSuite {
         try FileManagerPlayground {
             Directory("foo")
         }
-        .test { fileManager in
-            let url = URL(fileURLWithPath: "./foo")
-            try fileManager.delete(at: url)
+        .test {
+            let url = $1.appending(path: "foo")
+            try $0.delete(at: url)
 
-            #expect(!fileManager.directoryExists(at: url))
+            #expect(!$0.directoryExists(at: url))
         }
     }
 
     @Test
     func delete_whenDirectoryDoesNotExist() throws {
         try FileManagerPlayground()
-            .test { fileManager in
-                let url = URL(fileURLWithPath: "./foo")
+            .test {
+                let url = $1.appending(path: "foo")
 
                 do {
-                    try fileManager.delete(at: url)
+                    try $0.delete(at: url)
                     #expect(Bool(false))
                 }
                 catch let error as NSError {
@@ -245,9 +245,8 @@ struct FileManagerKitTestSuite {
             "bar"
             SymbolicLink("bar_link", destination: "bar")
         }
-        .test { fileManager in
-            let cwd = URL(string: ".")!
-            let items = fileManager.listDirectory(at: cwd).sorted()
+        .test {
+            let items = $0.listDirectory(at: $1).sorted()
             #expect(items == [".foo", "a", "b", "bar", "bar_link", "c"])
         }
     }
@@ -258,7 +257,7 @@ struct FileManagerKitTestSuite {
             Directory("foo")
         }
         .test {
-            let url = URL(fileURLWithPath: "./foo")
+            let url = $1.appending(path: "foo")
             let items = $0.listDirectory(at: url)
             #expect(items == [])
         }
@@ -270,7 +269,7 @@ struct FileManagerKitTestSuite {
             "foo"
         }
         .test {
-            let url = URL(fileURLWithPath: "./foo")
+            let url = $1.appending(path: "foo")
             let items = $0.listDirectory(at: url)
             #expect(items == [])
         }
@@ -283,15 +282,15 @@ struct FileManagerKitTestSuite {
         try FileManagerPlayground {
             "source"
         }
-        .test { fileManager in
-            let source = URL(fileURLWithPath: "./source")
-            let destination = URL(fileURLWithPath: "./destination")
+        .test {
+            let source = $1.appending(path: "source")
+            let destination = $1.appending(path: "destination")
 
-            try fileManager.copy(from: source, to: destination)
+            try $0.copy(from: source, to: destination)
 
-            #expect(fileManager.fileExists(at: destination))
-            let originalData = fileManager.contents(atPath: source.path())
-            let copiedData = fileManager.contents(atPath: destination.path())
+            #expect($0.fileExists(at: destination))
+            let originalData = $0.contents(atPath: source.path())
+            let copiedData = $0.contents(atPath: destination.path())
             #expect(originalData == copiedData)
         }
     }
@@ -299,12 +298,12 @@ struct FileManagerKitTestSuite {
     @Test
     func copy_whenSourceDoesNotExist() throws {
         try FileManagerPlayground()
-            .test { fileManager in
-                let source = URL(fileURLWithPath: "./nonexistent")
-                let destination = URL(fileURLWithPath: "./destination")
+            .test {
+                let source = $1.appending(path: "nonexistent")
+                let destination = $1.appending(path: "destination")
 
                 do {
-                    try fileManager.copy(from: source, to: destination)
+                    try $0.copy(from: source, to: destination)
                     #expect(Bool(false))
                 }
                 catch let error as NSError {
@@ -320,12 +319,12 @@ struct FileManagerKitTestSuite {
             "source"
             "destination"
         }
-        .test { fileManager in
-            let source = URL(fileURLWithPath: "./source")
-            let destination = URL(fileURLWithPath: "./destination")
+        .test {
+            let source = $1.appending(path: "source")
+            let destination = $1.appending(path: "destination")
 
             do {
-                try fileManager.copy(from: source, to: destination)
+                try $0.copy(from: source, to: destination)
                 #expect(Bool(false))
             }
             catch let error as NSError {
@@ -342,26 +341,26 @@ struct FileManagerKitTestSuite {
         try FileManagerPlayground {
             "source"
         }
-        .test { fileManager in
-            let source = URL(fileURLWithPath: "./source")
-            let destination = URL(fileURLWithPath: "./destination")
+        .test {
+            let source = $1.appending(path: "source")
+            let destination = $1.appending(path: "destination")
 
-            try fileManager.move(from: source, to: destination)
+            try $0.move(from: source, to: destination)
 
-            #expect(!fileManager.fileExists(at: source))
-            #expect(fileManager.fileExists(at: destination))
+            #expect(!$0.fileExists(at: source))
+            #expect($0.fileExists(at: destination))
         }
     }
 
     @Test
     func move_whenSourceDoesNotExist() throws {
         try FileManagerPlayground()
-            .test { fileManager in
-                let source = URL(fileURLWithPath: "./nonexistent")
-                let destination = URL(fileURLWithPath: "./destination")
+            .test {
+                let source = $1.appending(path: "nonexistent")
+                let destination = $1.appending(path: "destination")
 
                 do {
-                    try fileManager.move(from: source, to: destination)
+                    try $0.move(from: source, to: destination)
                     #expect(Bool(false))
                 }
                 catch let error as NSError {
@@ -377,12 +376,12 @@ struct FileManagerKitTestSuite {
             "source"
             "destination"
         }
-        .test { fileManager in
-            let source = URL(fileURLWithPath: "./source")
-            let destination = URL(fileURLWithPath: "./destination")
+        .test {
+            let source = $1.appending(path: "source")
+            let destination = $1.appending(path: "destination")
 
             do {
-                try fileManager.move(from: source, to: destination)
+                try $0.move(from: source, to: destination)
                 #expect(Bool(false))
             }
             catch let error as NSError {
@@ -399,15 +398,15 @@ struct FileManagerKitTestSuite {
         try FileManagerPlayground {
             File("sourceFile", string: "Hello, world!")
         }
-        .test { fileManager in
-            let source = URL(fileURLWithPath: "./sourceFile")
-            let destination = URL(fileURLWithPath: "./destination")
-            try fileManager.link(from: source, to: destination)
-            let exists = fileManager.exists(at: destination)
-            let attributes = try fileManager.attributes(at: destination)
+        .test {
+            let source = $1.appending(path: "sourceFile")
+            let destination = $1.appending(path: "destination")
+            try $0.link(from: source, to: destination)
+            let exists = $0.exists(at: destination)
+            let attributes = try $0.attributes(at: destination)
             let fileType = attributes[.type] as? FileAttributeType
 
-            #expect(fileManager.linkExists(at: destination))
+            #expect($0.linkExists(at: destination))
             #expect(exists)
             #expect(fileType == .typeSymbolicLink)
         }
@@ -416,19 +415,19 @@ struct FileManagerKitTestSuite {
     @Test
     func link_whenSourceDoesNotExist() throws {
         try FileManagerPlayground()
-            .test { fileManager in
-                let source = URL(fileURLWithPath: "./missingSource")
-                let destination = URL(fileURLWithPath: "./destination")
-                try fileManager.link(from: source, to: destination)
-                let attributes = try fileManager.attributes(at: destination)
+            .test {
+                let source = $1.appending(path: "missingSource")
+                let destination = $1.appending(path: "destination")
+                try $0.link(from: source, to: destination)
+                let attributes = try $0.attributes(at: destination)
                 let fileType = attributes[.type] as? FileAttributeType
 
                 #expect(fileType == .typeSymbolicLink)
 
-                #expect(fileManager.linkExists(at: destination))
+                #expect($0.linkExists(at: destination))
 
                 // Check that resolving the symlink gives the expected (absolute) path
-                let resolvedPath = try fileManager.destinationOfSymbolicLink(
+                let resolvedPath = try $0.destinationOfSymbolicLink(
                     atPath: destination.path()
                 )
                 #expect(
@@ -437,7 +436,7 @@ struct FileManagerKitTestSuite {
                 )
 
                 // Check that the target file does not exist (dangling link)
-                #expect(!fileManager.fileExists(atPath: resolvedPath))
+                #expect(!$0.fileExists(atPath: resolvedPath))
             }
     }
 
@@ -447,12 +446,12 @@ struct FileManagerKitTestSuite {
             "source"
             "destination"
         }
-        .test { fileManager in
-            let source = URL(fileURLWithPath: "./source")
-            let destination = URL(fileURLWithPath: "./destination")
+        .test {
+            let source = $1.appending(path: "source")
+            let destination = $1.appending(path: "destination")
 
             do {
-                try fileManager.link(from: source, to: destination)
+                try $0.link(from: source, to: destination)
                 #expect(Bool(false))
             }
             catch let error as NSError {
@@ -469,31 +468,28 @@ struct FileManagerKitTestSuite {
         try FileManagerPlayground {
             "file"
         }
-        .test { fileManager in
-            let file = URL(fileURLWithPath: "./file")
+        .test {
+            let file = $1.appending(path: "file")
 
-            let creationDate = try fileManager.creationDate(at: file)
-            let attributes = try fileManager.attributesOfItem(
-                atPath: file.path()
-            )
+            let creationDate = try $0.creationDate(at: file)
+            let attributes = try $0.attributesOfItem(atPath: file.path())
 
-            #expect(
-                creationDate
-                    == (attributes[.creationDate] as? Date ?? attributes[
-                        .modificationDate
-                    ] as! Date)
-            )
+            let creationDateAttribute = attributes[.creationDate] as? Date
+            let modDateAttribute = attributes[.modificationDate] as! Date
+            let dateAttrbiute = creationDateAttribute ?? modDateAttribute
+            
+            #expect(creationDate == dateAttrbiute)
         }
     }
 
     @Test
     func creationDate_whenFileDoesNotExist() throws {
         try FileManagerPlayground()
-            .test { fileManager in
-                let file = URL(fileURLWithPath: "./nonexistent")
+            .test {
+                let file = $1.appending(path: "nonexistent")
 
                 do {
-                    _ = try fileManager.creationDate(at: file)
+                    _ = try $0.creationDate(at: file)
                     #expect(Bool(false))
                 }
                 catch let error as NSError {
@@ -510,13 +506,11 @@ struct FileManagerKitTestSuite {
         try FileManagerPlayground {
             "file"
         }
-        .test { fileManager in
-            let file = URL(fileURLWithPath: "./file")
+        .test {
+            let file = $1.appending(path: "file")
 
-            let modificationDate = try fileManager.modificationDate(at: file)
-            let attributes = try fileManager.attributesOfItem(
-                atPath: file.path()
-            )
+            let modificationDate = try $0.modificationDate(at: file)
+            let attributes = try $0.attributesOfItem(atPath: file.path())
 
             #expect(modificationDate == attributes[.modificationDate] as? Date)
         }
@@ -525,11 +519,11 @@ struct FileManagerKitTestSuite {
     @Test
     func modificationDate_whenFileDoesNotExist() throws {
         try FileManagerPlayground()
-            .test { fileManager in
-                let file = URL(fileURLWithPath: "./nonexistent")
+            .test {
+                let file = $1.appending(path: "nonexistent")
 
                 do {
-                    _ = try fileManager.modificationDate(at: file)
+                    _ = try $0.modificationDate(at: file)
                     #expect(Bool(false))
                 }
                 catch let error as NSError {
@@ -547,10 +541,10 @@ struct FileManagerKitTestSuite {
             let text = "Hello, world!"
             File("file", string: text)
         }
-        .test { fileManager in
-            let file = URL(fileURLWithPath: "./file")
+        .test {
+            let file = $1.appending(path: "file")
 
-            let fileSize = try fileManager.size(at: file)
+            let fileSize = try $0.size(at: file)
             let expectedSize = "Hello, world!".utf8.count
 
             #expect(fileSize == expectedSize)
@@ -560,9 +554,9 @@ struct FileManagerKitTestSuite {
     @Test
     func size_whenFileDoesNotExist() throws {
         try FileManagerPlayground()
-            .test { fileManager in
-                let file = URL(fileURLWithPath: "./nonexistent")
-                let size = try fileManager.size(at: file)
+            .test {
+                let file = $1.appending(path: "nonexistent")
+                let size = try $0.size(at: file)
 
                 #expect(size == 0)
             }
@@ -575,15 +569,15 @@ struct FileManagerKitTestSuite {
         try FileManagerPlayground {
             "file"
         }
-        .test { fileManager in
-            let url = URL(fileURLWithPath: "./file")
+        .test {
+            let url = $1.appending(path: "file")
 
             let newDate = Date(timeIntervalSince1970: 10000)
             let attributes: [FileAttributeKey: Any] = [
                 .modificationDate: newDate
             ]
-            try fileManager.setAttributes(attributes, at: url)
-            let updatedAttributes = try fileManager.attributes(at: url)
+            try $0.setAttributes(attributes, at: url)
+            let updatedAttributes = try $0.attributes(at: url)
 
             #expect(updatedAttributes[.modificationDate] as? Date == newDate)
         }
@@ -592,14 +586,14 @@ struct FileManagerKitTestSuite {
     @Test
     func setAttributes_whenFileDoesNotExist() throws {
         try FileManagerPlayground()
-            .test { fileManager in
-                let url = URL(fileURLWithPath: "./nonexistent")
+            .test {
+                let url = $1.appending(path: "nonexistent")
 
                 do {
                     let attributes: [FileAttributeKey: Any] = [
                         .modificationDate: Date()
                     ]
-                    try fileManager.setAttributes(attributes, at: url)
+                    try $0.setAttributes(attributes, at: url)
                     #expect(Bool(false))
                 }
                 catch let error as NSError {
@@ -616,12 +610,12 @@ struct FileManagerKitTestSuite {
         try FileManagerPlayground {
             "file"
         }
-        .test { fileManager in
-            let url = URL(fileURLWithPath: "./file")
+        .test {
+            let url = $1.appending(path: "file")
 
             let permissions = 600
-            try fileManager.setPermissions(permissions, at: url)
-            let updatedPermissions = try fileManager.permissions(at: url)
+            try $0.setPermissions(permissions, at: url)
+            let updatedPermissions = try $0.permissions(at: url)
 
             #expect(updatedPermissions == permissions)
         }
@@ -630,11 +624,11 @@ struct FileManagerKitTestSuite {
     @Test
     func setPermissions_whenFileDoesNotExist() throws {
         try FileManagerPlayground()
-            .test { fileManager in
-                let url = URL(fileURLWithPath: "./nonexistent")
+            .test {
+                let url = $1.appending(path: "nonexistent")
 
                 do {
-                    try fileManager.setPermissions(600, at: url)
+                    try $0.setPermissions(600, at: url)
                     #expect(Bool(false))
                 }
                 catch let error as NSError {

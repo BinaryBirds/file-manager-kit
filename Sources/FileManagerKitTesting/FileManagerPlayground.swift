@@ -151,28 +151,32 @@ public struct FileManagerPlayground {
         }
     }
 
+    private let fileManager: FileManager
     private let directory: Directory
 
-    public init(@DirectoryBuilder _ contentsClosure: () -> [Item]) {
+    public init(
+        fileManager: FileManager = .default,
+        @DirectoryBuilder _ contentsClosure: () -> [Item]
+    ) {
+        self.fileManager = fileManager
         self.directory = .init(
             "FileManagerPlayground_\(UUID().uuidString)",
             contentsClosure
         )
     }
 
-    public init() {
+    public init(
+        fileManager: FileManager = .default
+    ) {
+        self.fileManager = fileManager
         self.directory = .init("FileManagerPlayground_\(UUID().uuidString)", {})
     }
 
-    public func test(_ tester: (FileManager) throws -> Void) throws {
-        let fileManager = FileManager()
+    public func test(_ tester: (FileManager, URL) throws -> Void) throws {
         let tempDir = fileManager.temporaryDirectory
         try directory.build(in: tempDir, using: fileManager)
-        let previousCWD = fileManager.currentDirectoryPath
         let createdDir = tempDir.appendingPathComponent(directory.name)
-        fileManager.changeCurrentDirectoryPath(createdDir.path())
-        try tester(fileManager)
-        fileManager.changeCurrentDirectoryPath(previousCWD)
+        try tester(fileManager, createdDir)
         try fileManager.removeItem(atPath: createdDir.path())
     }
 }
