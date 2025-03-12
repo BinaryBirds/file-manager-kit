@@ -28,7 +28,7 @@ struct FileManagerKitTestSuite {
         try FileManagerPlayground()
             .test {
                 let url = $1.appending(path: "does/not/exist")
-                
+
                 #expect(!$0.exists(at: url))
             }
     }
@@ -57,7 +57,7 @@ struct FileManagerKitTestSuite {
             }
         }
         .test {
-            let url = $1.appending(path:  "foo/bar")
+            let url = $1.appending(path: "foo/bar")
 
             #expect(!$0.fileExists(at: url))
         }
@@ -477,7 +477,7 @@ struct FileManagerKitTestSuite {
             let creationDateAttribute = attributes[.creationDate] as? Date
             let modDateAttribute = attributes[.modificationDate] as! Date
             let dateAttrbiute = creationDateAttribute ?? modDateAttribute
-            
+
             #expect(creationDate == dateAttrbiute)
         }
     }
@@ -636,5 +636,61 @@ struct FileManagerKitTestSuite {
                     #expect(error.code == 4)
                 }
             }
+    }
+    
+    @Test
+    func listDirectoryRecursively() throws {
+        try FileManagerPlayground {
+            Directory("foo") {
+                "bap"
+                Directory("bar") {
+                    "beep"
+                    Directory("baz") {
+                        "boop"
+                    }
+                }
+            }
+        }
+        .test {
+            let baseUrlLength = $1.path().count
+            let results = $0.listDirectoryRecursively(at: $1)
+                .map { String($0.path().dropFirst(baseUrlLength)) }
+                .sorted()
+            let expected = ["foo/bap", "foo/bar/baz/boop", "foo/bar/beep"]
+            
+            #expect(expected == results)
+        }
+    }
+    
+    @Test
+    func copyDirectoryRecursively() throws {
+        try FileManagerPlayground {
+            Directory("from") {
+                Directory("foo") {
+                    "bap"
+                    Directory("bar") {
+                        "beep"
+                        Directory("baz") {
+                            "boop"
+                        }
+                    }
+                }
+            }
+            Directory("to")
+        }
+        .test {
+            let from = $1.appendingPathComponent("from")
+            let to = $1.appendingPathComponent("to")
+            
+            try $0.copyRecursively(from: from, to: to)
+            
+            let baseUrlLength = to.path().count
+            let results = $0.listDirectoryRecursively(at: to)
+                .map { String($0.path().dropFirst(baseUrlLength)) }
+                .sorted()
+            let expected = ["foo/bap", "foo/bar/baz/boop", "foo/bar/beep"]
+            
+            #expect(expected == results)
+        }
     }
 }

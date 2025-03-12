@@ -46,4 +46,8 @@ public protocol FileManagerKit {
     func creationDate(at url: URL) throws -> Date
 
     func modificationDate(at url: URL) throws -> Date
+
+    func listDirectoryRecursively(at url: URL) -> [URL]
+
+    func copyRecursively(from inputURL: URL, to outputURL: URL) throws
 }
