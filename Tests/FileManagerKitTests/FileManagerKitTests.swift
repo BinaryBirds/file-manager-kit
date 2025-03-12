@@ -637,7 +637,7 @@ struct FileManagerKitTestSuite {
                 }
             }
     }
-    
+
     @Test
     func listDirectoryRecursively() throws {
         try FileManagerPlayground {
@@ -657,11 +657,11 @@ struct FileManagerKitTestSuite {
                 .map { String($0.path().dropFirst(baseUrlLength)) }
                 .sorted()
             let expected = ["foo/bap", "foo/bar/baz/boop", "foo/bar/beep"]
-            
+
             #expect(expected == results)
         }
     }
-    
+
     @Test
     func copyDirectoryRecursively() throws {
         try FileManagerPlayground {
@@ -681,15 +681,15 @@ struct FileManagerKitTestSuite {
         .test {
             let from = $1.appendingPathComponent("from")
             let to = $1.appendingPathComponent("to")
-            
+
             try $0.copyRecursively(from: from, to: to)
-            
+
             let baseUrlLength = to.path().count
             let results = $0.listDirectoryRecursively(at: to)
                 .map { String($0.path().dropFirst(baseUrlLength)) }
                 .sorted()
             let expected = ["foo/bap", "foo/bar/baz/boop", "foo/bar/beep"]
-            
+
             #expect(expected == results)
         }
     }
