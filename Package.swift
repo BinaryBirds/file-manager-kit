@@ -1,16 +1,53 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 6.0
 import PackageDescription
 
 let package = Package(
     name: "file-manager-kit",
     platforms: [
-        .macOS(.v10_15),
+        .macOS(.v14),
+        .iOS(.v17),
+        .tvOS(.v17),
+        .watchOS(.v10),
+        .visionOS(.v1),
     ],
     products: [
-        .library(name: "FileManagerKit", targets: ["FileManagerKit"]),
+        .library(
+            name: "FileManagerKit",
+            targets: ["FileManagerKit"]
+        ),
+        .library(
+            name: "FileManagerKitTesting",
+            targets: ["FileManagerKitTesting"]
+        ),
+    ],
+    dependencies: [
+      
     ],
     targets: [
-        .target(name: "FileManagerKit"),
-        .testTarget(name: "FileManagerKitTests", dependencies: ["FileManagerKit"]),
+        .target(
+            name: "FileManagerKit",
+            dependencies: [
+                
+            ],
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency=complete"),
+            ]
+        ),
+        .target(
+            name: "FileManagerKitTesting",
+            dependencies: [
+                
+            ],
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency=complete"),
+            ]
+        ),
+        .testTarget(
+            name: "FileManagerKitTests",
+            dependencies: [
+                .target(name: "FileManagerKit"),
+                .target(name: "FileManagerKitTesting")
+            ]
+        ),
     ]
 )

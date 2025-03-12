@@ -1,16 +1,26 @@
+SHELL=/bin/bash
+.PHONY: docker
 
+build:
+	swift build
 
-# swift-format commands
+release:
+	swift build -c release
+	
+test:
+	swift test --parallel
+
+test-with-coverage:
+	swift test --parallel --enable-code-coverage
+
+clean:
+	rm -rf .build
+
+check:
+	./scripts/run-checks.sh
 
 format:
-	@curl -s https://raw.githubusercontent.com/BinaryBirds/swift-format-template/main/config.json >> swift-format.json && \
-	swift-format --configuration swift-format.json -i -r ./Sources && \
-	swift-format --configuration swift-format.json -i -r ./Tests && \
-	rm -f ./swift-format.json
+	./scripts/run-swift-format.sh --fix
 
-lint:
-	@curl -s https://raw.githubusercontent.com/BinaryBirds/swift-format-template/main/config.json >> swift-format.json && \
-	swift-format lint --configuration swift-format.json -r ./Sources && \
-	swift-format lint --configuration swift-format.json -r ./Tests && \
-	rm -f ./swift-format.json
-
+docker:
+	docker build -t file-manager-kit-image . -f ./Docker/Dockerfile.ubuntu && docker run --rm file-manager-kit-image

@@ -1,190 +1,53 @@
 import Foundation
 
-extension FileManager {
+public protocol FileManagerKit {
 
-    // MARK: - exists
+    var currentDirectoryPath: String { get }
 
-    public static var currentDirectory: URL {
-        URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-    }
+    var homeDirectoryForCurrentUser: URL { get }
 
-    public func exists(
-        at url: URL
-    ) -> Bool {
-        fileExists(atPath: url.path)
-    }
+    var temporaryDirectory: URL { get }
 
-    public func directoryExists(
-        at url: URL
-    ) -> Bool {
-        var isDirectory = ObjCBool(false)
-        if fileExists(atPath: url.path, isDirectory: &isDirectory) {
-            return isDirectory.boolValue
-        }
-        return false
-    }
+    func exists(at url: URL) -> Bool
 
-    public func fileExists(
-        at url: URL
-    ) -> Bool {
-        var isDirectory = ObjCBool(false)
-        if fileExists(atPath: url.path, isDirectory: &isDirectory) {
-            return !isDirectory.boolValue
-        }
-        return false
-    }
+    func directoryExists(at url: URL) -> Bool
 
-    // TODO: linux support
-    public func linkExists(
-        at url: URL
-    ) -> Bool {
-        #if os(iOS) || os(macOS) || os(tvOS) || os(watchOS)
-            let resourceValues = try! url.resourceValues(
-                forKeys: [.isSymbolicLinkKey]
-            )
-            if let isSymbolicLink = resourceValues.isSymbolicLink {
-                return isSymbolicLink
-            }
-        #endif
-        return false
-    }
+    func fileExists(at url: URL) -> Bool
 
-    // MARK: - contents
+    func linkExists(at url: URL) -> Bool
 
-    public func listDirectory(
-        at url: URL,
-        includingHiddenItems: Bool = false
-    ) -> [String] {
-        guard directoryExists(at: url) else {
-            return []
-        }
-        var options: FileManager.DirectoryEnumerationOptions = []
-        if !includingHiddenItems {
-            options = [.skipsHiddenFiles]
-        }
-        let list = try? contentsOfDirectory(
-            at: url,
-            includingPropertiesForKeys: nil,
-            options: options
-        )
-        return list?.map { $0.lastPathComponent } ?? []
-    }
+    func createDirectory(at url: URL) throws
 
-    // MARK: - operations
+    func listDirectory(at url: URL) -> [String]
 
-    public func createDirectory(
-        at url: URL
-    ) throws {
-        guard !directoryExists(at: url) else {
-            return
-        }
-        try createDirectory(
-            atPath: url.path,
-            withIntermediateDirectories: true,
-            attributes: [
-                .posixPermissions: 0o744
-            ]
-        )
-    }
+    func createFile(at url: URL, contents: Data?) throws
 
-    public func copy(
-        from source: URL,
-        to destination: URL
-    ) throws {
-        try copyItem(at: source, to: destination)
-    }
+    func copy(from source: URL, to destination: URL) throws
 
-    public func move(
-        from source: URL,
-        to destination: URL
-    ) throws {
-        try moveItem(at: source, to: destination)
-    }
+    func move(from source: URL, to destination: URL) throws
 
-    public func link(
-        from source: URL,
-        to destination: URL
-    ) throws {
-        try createSymbolicLink(at: destination, withDestinationURL: source)
-    }
+    func link(from source: URL, to destination: URL) throws
 
-    public func delete(
-        at url: URL
-    ) throws {
-        try removeItem(at: url)
-    }
+    func delete(at url: URL) throws
 
-    // MARK: - attributes
+    func attributes(at url: URL) throws -> [FileAttributeKey: Any]
 
-    public func setAttributes(
+    func setAttributes(
         _ attributes: [FileAttributeKey: Any],
         at url: URL
-    ) throws {
-        try setAttributes(attributes, ofItemAtPath: url.path)
-    }
+    ) throws
 
-    public func attributes(at url: URL) throws -> [FileAttributeKey: Any] {
-        try attributesOfItem(atPath: url.path)
-    }
+    func setPermissions(_ permission: Int, at url: URL) throws
 
-    // MARK: - permission
+    func permissions(at url: URL) throws -> Int
 
-    public func setPermissions(
-        _ permission: Int,
-        at url: URL
-    ) throws {
-        try setAttributes([.posixPermissions: permission], at: url)
-    }
+    func size(at url: URL) throws -> UInt64
 
-    public func permissions(
-        at url: URL
-    ) throws -> Int {
-        let attributes = try attributes(at: url)
-        return attributes[.posixPermissions] as! Int
-    }
+    func creationDate(at url: URL) throws -> Date
 
-    // MARK: - size
+    func modificationDate(at url: URL) throws -> Date
 
-    public func size(at url: URL) throws -> UInt64 {
-        if fileExists(at: url) {
-            let attributes = try attributes(at: url)
-            let size = attributes[.size] as! NSNumber
-            return size.uint64Value
-        }
-        let keys: Set<URLResourceKey> = [
-            .isRegularFileKey,
-            .fileAllocatedSizeKey,
-            .totalFileAllocatedSizeKey,
-        ]
-        guard
-            let enumerator = enumerator(
-                at: url,
-                includingPropertiesForKeys: Array(keys)
-            )
-        else {
-            return 0
-        }
+    func listDirectoryRecursively(at url: URL) -> [URL]
 
-        var size: UInt64 = 0
-        for item in enumerator.compactMap({ $0 as? URL }) {
-            let values = try item.resourceValues(forKeys: keys)
-            guard values.isRegularFile ?? false else {
-                continue
-            }
-            size += UInt64(
-                values.totalFileAllocatedSize ?? values.fileAllocatedSize ?? 0
-            )
-        }
-        return size
-    }
-
-    public func creationDate(at url: URL) throws -> Date {
-        let attr = try attributes(at: url)
-        return attr[.creationDate] as! Date
-    }
-
-    public func modificationDate(at url: URL) throws -> Date {
-        let attr = try attributes(at: url)
-        return attr[.modificationDate] as! Date
-    }
+    func copyRecursively(from inputURL: URL, to outputURL: URL) throws
 }
