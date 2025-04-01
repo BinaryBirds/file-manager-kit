@@ -136,40 +136,41 @@ public struct FileManagerPlayground {
         public static func buildBlock(_ components: [Item]...) -> [Item] {
             components.flatMap { $0 }
         }
-        
+
         public static func buildExpression(_ expression: File) -> [Item] {
             [.file(expression)]
         }
-        
+
         public static func buildExpression(_ expression: Directory) -> [Item] {
             [.directory(expression)]
         }
-        
-        public static func buildExpression(_ expression: SymbolicLink) -> [Item] {
+
+        public static func buildExpression(_ expression: SymbolicLink) -> [Item]
+        {
             [.symbolicLink(expression)]
         }
-        
+
         // Optionally allow string literals to be treated as files:
         public static func buildExpression(_ expression: String) -> [Item] {
             [.file(File(expression, contents: nil))]
         }
-        
+
         public static func buildExpression(_ expression: [Item]) -> [Item] {
             expression
         }
-        
+
         public static func buildOptional(_ component: [Item]?) -> [Item] {
             component ?? []
         }
-        
+
         public static func buildEither(first component: [Item]) -> [Item] {
             component
         }
-        
+
         public static func buildEither(second component: [Item]) -> [Item] {
             component
         }
-        
+
         public static func buildArray(_ components: [[Item]]) -> [Item] {
             components.flatMap { $0 }
         }
