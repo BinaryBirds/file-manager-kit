@@ -693,4 +693,48 @@ struct FileManagerKitTestSuite {
             #expect(expected == results)
         }
     }
+    
+    @Test
+    func testExtraParams() throws {
+        let fileManager = FileManager.default
+        let rootUrl = fileManager.temporaryDirectory
+        let rootName = "test"
+        
+        try FileManagerPlayground(
+            rootUrl: rootUrl,
+            rootName: rootName,
+            fileManager: fileManager
+        ) {
+            Directory("from") {
+                Directory("foo") {
+                    "bap"
+                    Directory("bar") {
+                        "beep"
+                        Directory("baz") {
+                            "boop"
+                        }
+                    }
+                }
+            }
+            Directory("to")
+        }
+        .test {
+            #expect(rootUrl.appendingPathComponent(rootName).path() == $1.path())
+            
+            let from = $1.appendingPathComponent("from")
+            let to = $1.appendingPathComponent("to")
+            
+            try $0.copyRecursively(from: from, to: to)
+
+            let baseUrlLength = to.path().count
+            let results = $0.listDirectoryRecursively(at: to)
+                .map { String($0.path().dropFirst(baseUrlLength)) }
+                .sorted()
+            let expected = ["foo/bap", "foo/bar/baz/boop", "foo/bar/beep"]
+
+            #expect(expected == results)
+        }
+    }
+    
+    
 }
