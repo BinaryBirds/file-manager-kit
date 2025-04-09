@@ -188,21 +188,21 @@ public struct FileManagerPlayground {
     ) {
         self.fileManager = fileManager
         self.rootUrl = rootUrl ?? self.fileManager.temporaryDirectory
-        
+
         let name = rootName ?? "FileManagerPlayground_\(UUID().uuidString)"
         self.directory = .init(
             name,
             contentsClosure
         )
     }
-    
+
     public init(
         fileManager: FileManager = .default,
         @DirectoryBuilder _ contentsClosure: () -> [Item]
     ) {
         self.fileManager = fileManager
         self.rootUrl = self.fileManager.temporaryDirectory
-        
+
         self.directory = .init(
             "FileManagerPlayground_\(UUID().uuidString)",
             contentsClosure
@@ -214,7 +214,7 @@ public struct FileManagerPlayground {
     ) {
         self.fileManager = fileManager
         self.rootUrl = self.fileManager.temporaryDirectory
-        
+
         self.directory = .init("FileManagerPlayground_\(UUID().uuidString)", {})
     }
 
