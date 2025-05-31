@@ -74,7 +74,7 @@ struct DirectoryBuilderTests {
                 [
                     .file(File("array3.txt"))
                 ]
-                
+
                 // Custom BuildableItem
                 JSON(name: "encoded-name", contents: EncodeMe(name: "MyName"))
             }
@@ -89,7 +89,7 @@ struct DirectoryBuilderTests {
                     JSON(
                         name: "encoded-name-you",
                         contents: EncodeMe(name: "YourName")
-                    )
+                    ),
                 ]
             }
         }

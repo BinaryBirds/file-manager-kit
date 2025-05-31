@@ -8,6 +8,6 @@
 import Foundation
 
 protocol Buildable {
-    
+
     func build(in path: URL, using fileManager: FileManager) throws
 }

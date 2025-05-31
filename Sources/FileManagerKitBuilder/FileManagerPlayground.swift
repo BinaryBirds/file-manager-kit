@@ -24,17 +24,21 @@ public struct FileManagerPlayground {
 
     @resultBuilder
     public enum DirectoryBuilder {
-        
-        public static func buildExpression<T: BuildableItem>(_ expression: T) -> [Item] {
+
+        public static func buildExpression<T: BuildableItem>(_ expression: T)
+            -> [Item]
+        {
             [expression.buildItem()]
         }
 
-        public static func buildExpression<T: BuildableItem>(_ expressions: [T]) -> [Item] {
+        public static func buildExpression<T: BuildableItem>(_ expressions: [T])
+            -> [Item]
+        {
             expressions.map {
                 $0.buildItem()
             }
         }
-        
+
         public static func buildBlock(_ components: [Item]...) -> [Item] {
             components.flatMap { $0 }
         }
@@ -81,9 +85,9 @@ public struct FileManagerPlayground {
     private let fileManager: FileManager
     private let directory: Directory
     private let rootUrl: URL
-    
+
     public let playgroundDirUrl: URL
-    
+
     public init(
         rootUrl: URL? = nil,
         rootName: String? = nil,
@@ -96,7 +100,9 @@ public struct FileManagerPlayground {
             name: rootName ?? "FileManagerPlayground_\(UUID().uuidString)",
             contentsClosure
         )
-        self.playgroundDirUrl = self.rootUrl.appendingPathComponent(directory.name)
+        self.playgroundDirUrl = self.rootUrl.appendingPathComponent(
+            directory.name
+        )
 
     }
 
@@ -110,7 +116,9 @@ public struct FileManagerPlayground {
             name: "FileManagerPlayground_\(UUID().uuidString)",
             contentsClosure
         )
-        self.playgroundDirUrl = self.rootUrl.appendingPathComponent(directory.name)
+        self.playgroundDirUrl = self.rootUrl.appendingPathComponent(
+            directory.name
+        )
     }
 
     public init(fileManager: FileManager = .default) {
@@ -120,7 +128,9 @@ public struct FileManagerPlayground {
             name: "FileManagerPlayground_\(UUID().uuidString)",
             {}
         )
-        self.playgroundDirUrl = self.rootUrl.appendingPathComponent(directory.name)
+        self.playgroundDirUrl = self.rootUrl.appendingPathComponent(
+            directory.name
+        )
     }
 
     @discardableResult
@@ -136,7 +146,7 @@ public struct FileManagerPlayground {
         }
         return (fileManager, playgroundDirUrl)
     }
-    
+
     public func test(_ tester: (FileManager, URL) throws -> Void) throws {
         try directory.build(in: rootUrl, using: fileManager)
         try tester(fileManager, playgroundDirUrl)
