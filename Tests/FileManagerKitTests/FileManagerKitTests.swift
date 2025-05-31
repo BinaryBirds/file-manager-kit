@@ -1,4 +1,4 @@
-import FileManagerKitTesting
+import FileManagerKitBuilder
 import Foundation
 import Testing
 
@@ -12,7 +12,7 @@ struct FileManagerKitTestSuite {
     @Test
     func exists_whenFileExists() throws {
         try FileManagerPlayground {
-            Directory("foo") {
+            Directory(name: "foo") {
                 "bar"
             }
         }
@@ -38,7 +38,7 @@ struct FileManagerKitTestSuite {
     @Test
     func fileExists_whenFileExists() throws {
         try FileManagerPlayground {
-            Directory("foo") {
+            Directory(name: "foo") {
                 "bar"
             }
         }
@@ -52,8 +52,8 @@ struct FileManagerKitTestSuite {
     @Test
     func fileExists_whenFolderExists() throws {
         try FileManagerPlayground {
-            Directory("foo") {
-                Directory("bar")
+            Directory(name: "foo") {
+                Directory(name: "bar")
             }
         }
         .test {
@@ -78,7 +78,7 @@ struct FileManagerKitTestSuite {
     @Test
     func directoryExists_whenDirectoryExists() throws {
         try FileManagerPlayground {
-            Directory("foo") {
+            Directory(name: "foo") {
                 "bar"
             }
         }
@@ -92,7 +92,7 @@ struct FileManagerKitTestSuite {
     @Test
     func directoryExists_whenFileExists() throws {
         try FileManagerPlayground {
-            Directory("foo") {
+            Directory(name: "foo") {
                 "bar"
             }
         }
@@ -144,7 +144,7 @@ struct FileManagerKitTestSuite {
     @Test
     func createFile_whenFileAlreadyExists() throws {
         try FileManagerPlayground {
-            Directory("foo") {
+            Directory(name: "foo") {
                 "bar"
             }
         }
@@ -174,8 +174,8 @@ struct FileManagerKitTestSuite {
     @Test
     func createDirectory_whenDirectoryAlreadyExists() throws {
         try FileManagerPlayground {
-            Directory("foo") {
-                Directory("bar")
+            Directory(name: "foo") {
+                Directory(name: "bar")
             }
         }
         .test {
@@ -191,7 +191,7 @@ struct FileManagerKitTestSuite {
     @Test
     func delete_whenFileExists() throws {
         try FileManagerPlayground {
-            Directory("foo") {
+            Directory(name: "foo") {
                 "bar"
             }
         }
@@ -206,7 +206,7 @@ struct FileManagerKitTestSuite {
     @Test
     func delete_whenDirectoryExists() throws {
         try FileManagerPlayground {
-            Directory("foo")
+            Directory(name: "foo")
         }
         .test {
             let url = $1.appending(path: "foo")
@@ -238,12 +238,12 @@ struct FileManagerKitTestSuite {
     @Test
     func listDirectory_whenDirectoryHasContent() throws {
         try FileManagerPlayground {
-            Directory("a")
-            Directory("b")
-            Directory("c")
-            File(".foo", string: "foo")
+            Directory(name: "a")
+            Directory(name: "b")
+            Directory(name: "c")
+            File(name: ".foo", string: "foo")
             "bar"
-            SymbolicLink("bar_link", destination: "bar")
+            SymbolicLink(name: "bar_link", destination: "bar")
         }
         .test {
             let items = $0.listDirectory(at: $1).sorted()
@@ -254,7 +254,7 @@ struct FileManagerKitTestSuite {
     @Test
     func listDirectory_whenDirectoryIsEmpty() throws {
         try FileManagerPlayground {
-            Directory("foo")
+            Directory(name: "foo")
         }
         .test {
             let url = $1.appending(path: "foo")
@@ -396,7 +396,7 @@ struct FileManagerKitTestSuite {
     @Test
     func link_whenSourceExists() throws {
         try FileManagerPlayground {
-            File("sourceFile", string: "Hello, world!")
+            File(name: "sourceFile", string: "Hello, world!")
         }
         .test {
             let source = $1.appending(path: "sourceFile")
@@ -539,7 +539,7 @@ struct FileManagerKitTestSuite {
     func size_whenFileExists() throws {
         try FileManagerPlayground {
             let text = "Hello, world!"
-            File("file", string: text)
+            File(name: "file", string: text)
         }
         .test {
             let file = $1.appending(path: "file")
@@ -641,11 +641,11 @@ struct FileManagerKitTestSuite {
     @Test
     func listDirectoryRecursively() throws {
         try FileManagerPlayground {
-            Directory("foo") {
+            Directory(name: "foo") {
                 "bap"
-                Directory("bar") {
+                Directory(name: "bar") {
                     "beep"
-                    Directory("baz") {
+                    Directory(name: "baz") {
                         "boop"
                     }
                 }
@@ -656,7 +656,7 @@ struct FileManagerKitTestSuite {
             let results = $0.listDirectoryRecursively(at: $1)
                 .map { String($0.path().dropFirst(baseUrlLength)) }
                 .sorted()
-            let expected = ["foo/bap", "foo/bar/baz/boop", "foo/bar/beep"]
+            let expected = ["/foo/bap", "/foo/bar/baz/boop", "/foo/bar/beep"]
 
             #expect(expected == results)
         }
@@ -665,18 +665,18 @@ struct FileManagerKitTestSuite {
     @Test
     func copyDirectoryRecursively() throws {
         try FileManagerPlayground {
-            Directory("from") {
-                Directory("foo") {
+            Directory(name: "from") {
+                Directory(name: "foo") {
                     "bap"
-                    Directory("bar") {
+                    Directory(name: "bar") {
                         "beep"
-                        Directory("baz") {
+                        Directory(name: "baz") {
                             "boop"
                         }
                     }
                 }
             }
-            Directory("to")
+            Directory(name: "to")
         }
         .test {
             let from = $1.appendingPathComponent("from")
@@ -695,28 +695,28 @@ struct FileManagerKitTestSuite {
     }
 
     @Test
-    func testExtraParams() throws {
+    func extraParams() throws {
         let fileManager = FileManager.default
         let rootUrl = fileManager.temporaryDirectory
-        let rootName = "test"
+        let rootName = "test/"
 
         try FileManagerPlayground(
             rootUrl: rootUrl,
             rootName: rootName,
             fileManager: fileManager
         ) {
-            Directory("from") {
-                Directory("foo") {
+            Directory(name: "from") {
+                Directory(name: "foo") {
                     "bap"
-                    Directory("bar") {
+                    Directory(name: "bar") {
                         "beep"
-                        Directory("baz") {
+                        Directory(name: "baz") {
                             "boop"
                         }
                     }
                 }
             }
-            Directory("to")
+            Directory(name: "to")
         }
         .test {
             #expect(
@@ -738,4 +738,24 @@ struct FileManagerKitTestSuite {
         }
     }
 
+    @Test
+    func buildAndRemove() throws {
+        let playground = FileManagerPlayground {
+            Directory(name: "foo") {
+                File(name: "bar.txt", string: "baz")
+            }
+        }
+
+        let built = try playground.build()
+        let fileManager = built.0
+        let builtURL = built.1
+
+        let fileURL = builtURL.appendingPathComponent("foo/bar.txt")
+
+        #expect(fileManager.fileExists(atPath: fileURL.path()))
+
+        try playground.remove()
+
+        #expect(!fileManager.fileExists(atPath: builtURL.path()))
+    }
 }
