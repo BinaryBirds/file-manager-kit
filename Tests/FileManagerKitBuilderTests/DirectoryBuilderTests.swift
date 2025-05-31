@@ -8,7 +8,7 @@
 import Foundation
 import Testing
 
-@testable import FileManagerKitTesting
+@testable import FileManagerKitBuilder
 
 struct DirectoryBuilderTests {
 
@@ -19,50 +19,50 @@ struct DirectoryBuilderTests {
         let useThird = true
         let dynamicFiles = (1...2)
             .map { i in
-                File("dynamic\(i).txt", contents: nil)
+                File(name: "dynamic\(i).txt", contents: nil)
             }
         let injected: [FileManagerPlayground.Item] = [
-            .file(File("injected1.txt", contents: nil)),
-            .file(File("injected2.txt", contents: nil)),
+            .file(File(name: "injected1.txt", contents: nil)),
+            .file(File(name: "injected2.txt", contents: nil)),
         ]
 
         try FileManagerPlayground {
-            Directory("root") {
+            Directory(name: "root") {
                 File("static.md")
 
                 if includeOptional {
-                    File("optional.txt")
+                    "optional.txt"
                 }
 
                 if useFirst {
-                    File("first-choice.txt")
+                    "first-choice.txt"
                 }
                 else {
-                    File("second-choice.txt")
+                    "second-choice.txt"
                 }
 
                 if useThird {
-                    File("third-choice.txt")
+                    "third-choice.txt"
                 }
                 else {
                     File("forth-choice.txt")
                 }
 
-                Directory("looped") {
+                Directory(name: "looped") {
                     for file in dynamicFiles {
                         file
                     }
                 }
 
-                Directory("empty") {}
+                Directory(name: "empty") {}
 
-                Directory("nested") {
-                    Directory("deeper") {
-                        File("deep.txt")
+                Directory(name: "nested") {
+                    Directory(name: "deeper") {
+                        "deep.txt"
                     }
                 }
 
-                SymbolicLink("link", destination: "static.md")
+                SymbolicLink(name: "link", destination: "static.md")
 
                 injected
 
@@ -73,6 +73,23 @@ struct DirectoryBuilderTests {
                 ]
                 [
                     .file(File("array3.txt"))
+                ]
+                
+                // Custom BuildableItem
+                JSON(name: "encoded-name", contents: EncodeMe(name: "MyName"))
+            }
+            Directory(name: "not-root") {
+                "string"
+                JSON(name: "encoded-name", contents: EncodeMe(name: "MyName"))
+                [
+                    JSON(
+                        name: "encoded-name-me",
+                        contents: EncodeMe(name: "MyName")
+                    ),
+                    JSON(
+                        name: "encoded-name-you",
+                        contents: EncodeMe(name: "YourName")
+                    )
                 ]
             }
         }
@@ -92,6 +109,11 @@ struct DirectoryBuilderTests {
                 "root/array1.txt",
                 "root/array2.txt",
                 "root/array3.txt",
+                "root/encoded-name.json",
+                "not-root/string",
+                "not-root/encoded-name.json",
+                "not-root/encoded-name-me.json",
+                "not-root/encoded-name-you.json",
             ]
 
             for path in checkPaths {

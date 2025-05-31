@@ -16,8 +16,8 @@ let package = Package(
             targets: ["FileManagerKit"]
         ),
         .library(
-            name: "FileManagerKitTesting",
-            targets: ["FileManagerKitTesting"]
+            name: "FileManagerKitBuilder",
+            targets: ["FileManagerKitBuilder"]
         ),
     ],
     dependencies: [
@@ -34,7 +34,7 @@ let package = Package(
             ]
         ),
         .target(
-            name: "FileManagerKitTesting",
+            name: "FileManagerKitBuilder",
             dependencies: [
                 
             ],
@@ -46,7 +46,14 @@ let package = Package(
             name: "FileManagerKitTests",
             dependencies: [
                 .target(name: "FileManagerKit"),
-                .target(name: "FileManagerKitTesting")
+                .target(name: "FileManagerKitBuilder")
+            ]
+        ),
+        .testTarget(
+            name: "FileManagerKitBuilderTests",
+            dependencies: [
+                .target(name: "FileManagerKit"),
+                .target(name: "FileManagerKitBuilder")
             ]
         ),
     ]
