@@ -6,11 +6,13 @@
 //
 
 import Foundation
+import FileManagerKit
 
 public struct File: ExpressibleByStringLiteral, Buildable {
-    private let name: String
-    private let attributes: [FileAttributeKey: Any]?
-    private let contents: Data?
+
+    let name: String
+    let attributes: [FileAttributeKey: Any]?
+    let contents: Data?
 
     public init(
         name: String,
@@ -27,21 +29,25 @@ public struct File: ExpressibleByStringLiteral, Buildable {
         attributes: [FileAttributeKey: Any]? = nil,
         string: String? = nil
     ) {
-        self.name = name
-        self.attributes = attributes
-        self.contents = string?.data(using: .utf8)
+        self.init(
+            name: name,
+            attributes: attributes,
+            contents: string?.data(using: .utf8)
+        )
     }
 
-    public init(stringLiteral value: String) {
-        self.init(name: value, contents: nil)
+    public init(
+        stringLiteral value: String
+    ) {
+        self.init(name: value, string: nil)
     }
 
     func build(
         in url: URL,
-        using fileManager: FileManager
+        using fileManager: FileManagerKit
     ) throws {
-        fileManager.createFile(
-            atPath: url.appendingPathComponent(name).path(),
+        try fileManager.createFile(
+            at: url.appending(path: name),
             contents: contents,
             attributes: attributes
         )

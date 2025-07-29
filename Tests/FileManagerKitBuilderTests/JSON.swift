@@ -23,7 +23,10 @@ public struct JSON<T: Encodable>: BuildableItem {
 
     public func buildItem() -> FileManagerPlayground.Item {
         let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.outputFormatting = [
+            .prettyPrinted,
+            .sortedKeys,
+        ]
 
         let data = try! encoder.encode(contents)
         let string = String(data: data, encoding: .utf8)!

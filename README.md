@@ -155,7 +155,7 @@ try FileManagerPlayground {
     }
 }
 .test { fileManager, rootUrl in
-    let fileURL = rootUrl.appendingPathComponent("foo/bar.txt")
+    let fileURL = rootUrl.appending(path: "foo/bar.txt")
     #expect(fileManager.fileExists(at: fileURL))
 }
 ```

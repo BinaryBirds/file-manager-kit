@@ -62,7 +62,7 @@ struct DirectoryBuilderTests {
                     }
                 }
 
-                SymbolicLink(name: "link", destination: "static.md")
+                Link(name: "link", target: "static.md")
 
                 injected
 

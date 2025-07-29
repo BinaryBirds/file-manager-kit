@@ -6,8 +6,10 @@
 //
 
 import Foundation
+import FileManagerKit
 
 public struct Directory: Buildable {
+
     let name: String
     let attributes: [FileAttributeKey: Any]?
     let contents: [FileManagerPlayground.Item]
@@ -16,32 +18,23 @@ public struct Directory: Buildable {
         name: String,
         attributes: [FileAttributeKey: Any]? = nil,
         @FileManagerPlayground.DirectoryBuilder _ contentsClosure: () ->
-            [FileManagerPlayground.Item]
+            [FileManagerPlayground.Item] = { [] }
     ) {
         self.name = name
         self.attributes = attributes
         self.contents = contentsClosure()
     }
 
-    public init(
-        name: String,
-        attributes: [FileAttributeKey: Any]? = nil
-    ) {
-        self.name = name
-        self.attributes = attributes
-        self.contents = []
-    }
-
     func build(
         in url: URL,
-        using fileManager: FileManager
+        using fileManager: FileManagerKit
     ) throws {
-        let dirUrl = url.appendingPathComponent(name)
+        let dirUrl = url.appending(path: name)
         try fileManager.createDirectory(
-            atPath: dirUrl.path(),
-            withIntermediateDirectories: true,
+            at: dirUrl,
             attributes: attributes
         )
+
         for item in contents {
             try item.build(in: dirUrl, using: fileManager)
         }

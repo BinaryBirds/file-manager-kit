@@ -6,8 +6,12 @@
 //
 
 import Foundation
+import FileManagerKit
 
 protocol Buildable {
 
-    func build(in path: URL, using fileManager: FileManager) throws
+    func build(
+        in path: URL,
+        using fileManager: FileManagerKit
+    ) throws
 }

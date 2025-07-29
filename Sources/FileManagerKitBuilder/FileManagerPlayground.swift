@@ -1,23 +1,24 @@
 import Foundation
+import FileManagerKit
 
 public struct FileManagerPlayground {
 
     public enum Item: Buildable {
         case file(File)
         case directory(Directory)
-        case symbolicLink(SymbolicLink)
+        case link(Link)
 
         func build(
             in path: URL,
-            using fileManager: FileManager
+            using fileManager: FileManagerKit
         ) throws {
             switch self {
             case .file(let file):
                 try file.build(in: path, using: fileManager)
             case .directory(let dir):
                 try dir.build(in: path, using: fileManager)
-            case .symbolicLink(let symlink):
-                try symlink.build(in: path, using: fileManager)
+            case .link(let link):
+                try link.build(in: path, using: fileManager)
             }
         }
     }
@@ -25,13 +26,17 @@ public struct FileManagerPlayground {
     @resultBuilder
     public enum DirectoryBuilder {
 
-        public static func buildExpression<T: BuildableItem>(_ expression: T)
+        public static func buildExpression<T: BuildableItem>(
+            _ expression: T
+        )
             -> [Item]
         {
             [expression.buildItem()]
         }
 
-        public static func buildExpression<T: BuildableItem>(_ expressions: [T])
+        public static func buildExpression<T: BuildableItem>(
+            _ expressions: [T]
+        )
             -> [Item]
         {
             expressions.map {
@@ -39,45 +44,64 @@ public struct FileManagerPlayground {
             }
         }
 
-        public static func buildBlock(_ components: [Item]...) -> [Item] {
+        public static func buildBlock(
+            _ components: [Item]...
+        ) -> [Item] {
             components.flatMap { $0 }
         }
 
-        public static func buildExpression(_ expression: File) -> [Item] {
+        public static func buildExpression(
+            _ expression: File
+        ) -> [Item] {
             [.file(expression)]
         }
 
-        public static func buildExpression(_ expression: Directory) -> [Item] {
+        public static func buildExpression(
+            _ expression: Directory
+        ) -> [Item] {
             [.directory(expression)]
         }
 
-        public static func buildExpression(_ expression: SymbolicLink) -> [Item]
-        {
-            [.symbolicLink(expression)]
+        public static func buildExpression(
+            _ expression: Link
+        ) -> [Item] {
+            [.link(expression)]
         }
 
         // Optionally allow string literals to be treated as files:
-        public static func buildExpression(_ expression: String) -> [Item] {
+        public static func buildExpression(
+            _ expression: String
+        ) -> [Item] {
             [.file(File(name: expression, contents: nil))]
         }
 
-        public static func buildExpression(_ expression: [Item]) -> [Item] {
+        public static func buildExpression(
+            _ expression: [Item]
+        ) -> [Item] {
             expression
         }
 
-        public static func buildOptional(_ component: [Item]?) -> [Item] {
+        public static func buildOptional(
+            _ component: [Item]?
+        ) -> [Item] {
             component ?? []
         }
 
-        public static func buildEither(first component: [Item]) -> [Item] {
+        public static func buildEither(
+            first component: [Item]
+        ) -> [Item] {
             component
         }
 
-        public static func buildEither(second component: [Item]) -> [Item] {
+        public static func buildEither(
+            second component: [Item]
+        ) -> [Item] {
             component
         }
 
-        public static func buildArray(_ components: [[Item]]) -> [Item] {
+        public static func buildArray(
+            _ components: [[Item]]
+        ) -> [Item] {
             components.flatMap { $0 }
         }
     }
@@ -92,7 +116,7 @@ public struct FileManagerPlayground {
         rootUrl: URL? = nil,
         rootName: String? = nil,
         fileManager: FileManager = .default,
-        @DirectoryBuilder _ contentsClosure: () -> [Item]
+        @DirectoryBuilder _ contentsClosure: () -> [Item] = { [] }
     ) {
         self.fileManager = fileManager
         self.rootUrl = rootUrl ?? self.fileManager.temporaryDirectory
@@ -100,56 +124,32 @@ public struct FileManagerPlayground {
             name: rootName ?? "FileManagerPlayground_\(UUID().uuidString)",
             contentsClosure
         )
-        self.playgroundDirUrl = self.rootUrl.appendingPathComponent(
-            directory.name
-        )
-
-    }
-
-    public init(
-        fileManager: FileManager = .default,
-        @DirectoryBuilder _ contentsClosure: () -> [Item]
-    ) {
-        self.fileManager = fileManager
-        self.rootUrl = self.fileManager.temporaryDirectory
-        self.directory = .init(
-            name: "FileManagerPlayground_\(UUID().uuidString)",
-            contentsClosure
-        )
-        self.playgroundDirUrl = self.rootUrl.appendingPathComponent(
-            directory.name
-        )
-    }
-
-    public init(fileManager: FileManager = .default) {
-        self.fileManager = fileManager
-        self.rootUrl = self.fileManager.temporaryDirectory
-        self.directory = .init(
-            name: "FileManagerPlayground_\(UUID().uuidString)",
-            {}
-        )
-        self.playgroundDirUrl = self.rootUrl.appendingPathComponent(
-            directory.name
-        )
+        self.playgroundDirUrl = self.rootUrl.appending(path: directory.name)
     }
 
     @discardableResult
-    public func build() throws -> (FileManager, URL) {
+    public func build(// no params
+        ) throws -> (FileManager, URL)
+    {
         try directory.build(in: rootUrl, using: fileManager)
         return (fileManager, playgroundDirUrl)
     }
 
     @discardableResult
-    public func remove() throws -> (FileManager, URL) {
-        if fileManager.fileExists(atPath: playgroundDirUrl.path()) {
-            try fileManager.removeItem(atPath: playgroundDirUrl.path())
+    public func remove(// no params
+        ) throws -> (FileManager, URL)
+    {
+        if fileManager.exists(at: playgroundDirUrl) {
+            try fileManager.delete(at: playgroundDirUrl)
         }
         return (fileManager, playgroundDirUrl)
     }
 
-    public func test(_ tester: (FileManager, URL) throws -> Void) throws {
+    public func test(
+        _ testBlock: (FileManager, URL) throws -> Void
+    ) throws {
         try directory.build(in: rootUrl, using: fileManager)
-        try tester(fileManager, playgroundDirUrl)
-        try fileManager.removeItem(atPath: playgroundDirUrl.path())
+        try testBlock(fileManager, playgroundDirUrl)
+        try fileManager.delete(at: playgroundDirUrl)
     }
 }
