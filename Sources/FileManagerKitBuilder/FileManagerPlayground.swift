@@ -128,7 +128,7 @@ public struct FileManagerPlayground {
     }
 
     @discardableResult
-    public func build(// no params
+    public func build(  // no params
         ) throws -> (FileManager, URL)
     {
         try directory.build(in: rootUrl, using: fileManager)
@@ -136,7 +136,7 @@ public struct FileManagerPlayground {
     }
 
     @discardableResult
-    public func remove(// no params
+    public func remove(  // no params
         ) throws -> (FileManager, URL)
     {
         if fileManager.exists(at: playgroundDirUrl) {
