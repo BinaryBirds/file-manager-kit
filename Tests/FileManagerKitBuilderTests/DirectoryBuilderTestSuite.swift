@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  DirectoryBuilderTestSuite.swift
 //  file-manager-kit
 //
 //  Created by Viasz-Kádi Ferenc on 2025. 04. 01..
@@ -10,7 +10,8 @@ import Testing
 
 @testable import FileManagerKitBuilder
 
-struct DirectoryBuilderTests {
+@Suite
+struct DirectoryBuilderTestSuite {
 
     @Test
     func builder_AllFeatures() throws {

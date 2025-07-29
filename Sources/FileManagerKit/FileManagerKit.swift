@@ -1,3 +1,10 @@
+//
+//  FileManagerKit.swift
+//  file-manager-kit
+//
+//  Created by Viasz-Kádi Ferenc on 2025. 05. 30..
+//
+
 import Foundation
 
 /// A protocol that abstracts common file system operations, such as checking for file existence,
@@ -16,7 +23,7 @@ public protocol FileManagerKit {
     /// The URL of the temporary directory.
     var temporaryDirectory: URL { get }
 
-    // MARK: - exists
+    // MARK: -
 
     /// Checks whether a file, directory, or link exists at the specified URL.
     ///
@@ -63,11 +70,12 @@ public protocol FileManagerKit {
         attributes: [FileAttributeKey: Any]?
     ) throws
 
-    /// Creates a file at the specified URL with optional contents.
+    /// Creates a file at the specified URL with optional contents and attributes.
     ///
     /// - Parameters:
     ///   - url: The location where the file should be created.
     ///   - contents: Optional data to write into the file.
+    ///   - attributes: Optional file attributes to apply to the file, such as permissions.
     /// - Throws: An error if the file could not be created.
     func createFile(
         at url: URL,
@@ -156,7 +164,26 @@ public protocol FileManagerKit {
         at url: URL
     ) -> [URL]
 
-    // MARK: - attributes
+    /// Finds file or directory names within a specified directory that match optional name or extension filters.
+    ///
+    /// This method can search recursively and optionally skip hidden files.
+    ///
+    /// - Parameters:
+    ///   - name: An optional base name to match (excluding the file extension). If `nil`, all names are matched.
+    ///   - extensions: An optional list of file extensions to match (e.g., `["txt", "md"]`). If `nil`, all extensions are matched.
+    ///   - recursively: Whether to include subdirectories in the search.
+    ///   - skipHiddenFiles: Whether to exclude hidden files and directories (those starting with a dot).
+    ///   - url: The root directory URL to search in.
+    /// - Returns: A list of matching file or directory names as relative paths from the input URL.
+    func find(
+        name: String?,
+        extensions: [String]?,
+        recursively: Bool,
+        skipHiddenFiles: Bool,
+        at url: URL
+    ) -> [String]
+
+    // MARK: -
 
     /// Retrieves the file attributes at the specified URL.
     ///

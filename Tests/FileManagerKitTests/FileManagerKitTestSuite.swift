@@ -1,10 +1,17 @@
+//
+//  FileManagerKitTestSuite.swift
+//  file-manager-kit
+//
+//  Created by Viasz-Kádi Ferenc on 2025. 04. 01..
+//
+
 import FileManagerKitBuilder
 import Foundation
 import Testing
 
 @testable import FileManagerKit
 
-@Suite(.serialized)
+@Suite
 struct FileManagerKitTestSuite {
 
     // MARK: - exists(at:) Tests
@@ -866,4 +873,123 @@ struct FileManagerKitTestSuite {
 
         #expect(!fileManager.fileExists(atPath: builtURL.path()))
     }
+
+    @Test
+    func find() throws {
+        try FileManagerPlayground {
+            File(name: "fileA.txt", string: "Test")
+            File(name: ".hidden.md", string: "Hidden")
+            File(name: "readme.md", string: "Readme")
+            Directory(name: "Subdir") {
+                File(name: "nested.swift", string: "Nested")
+            }
+        }
+        .test { fileManager, rootUrl in
+            // Non-recursive, skip hidden
+            let nonRecursive = fileManager.find(
+                at: rootUrl
+            )
+            #expect(nonRecursive.contains("fileA.txt"))
+            #expect(nonRecursive.contains("readme.md"))
+            #expect(!nonRecursive.contains(".hidden.md"))
+            #expect(!nonRecursive.contains("Subdir/nested.swift"))
+
+            // Recursive, skip hidden
+            let recursive = fileManager.find(
+                recursively: true,
+                at: rootUrl
+            )
+            #expect(recursive.contains("fileA.txt"))
+            #expect(recursive.contains("readme.md"))
+            #expect(recursive.contains("Subdir/nested.swift"))
+            #expect(!recursive.contains(".hidden.md"))
+
+            // Filter by name
+            let named = fileManager.find(
+                name: "readme",
+                recursively: true,
+                at: rootUrl
+            )
+            #expect(named.count == 1)
+            #expect(named.first == "readme.md")
+
+            // Filter by extension
+            let mdFiles = fileManager.find(
+                extensions: ["md"],
+                recursively: true,
+                skipHiddenFiles: false,
+                at: rootUrl
+            )
+            #expect(mdFiles.contains("readme.md"))
+            #expect(mdFiles.contains(".hidden.md"))
+
+            // Filter by name and extension
+            let combo = fileManager.find(
+                name: "fileA",
+                extensions: ["txt"],
+                recursively: true,
+                at: rootUrl
+            )
+            #expect(combo.contains("fileA.txt"))
+        }
+    }
+
+    @Test
+    func hardLink_whenSourceExists() throws {
+        try FileManagerPlayground {
+            File(name: "sourceFile", string: "Hello, hardlink!")
+        }
+        .test {
+            let source = $1.appending(path: "sourceFile")
+            let destination = $1.appending(path: "destination")
+
+            try $0.hardLink(from: source, to: destination)
+
+            #expect($0.fileExists(at: destination))
+            let sourceAttributes = try $0.attributes(at: source)
+            let destAttributes = try $0.attributes(at: destination)
+
+            let sourceInode = sourceAttributes[.systemFileNumber] as? UInt64
+            let destInode = destAttributes[.systemFileNumber] as? UInt64
+
+            // Inode numbers should match for a true hard link
+            #expect(sourceInode != nil && sourceInode == destInode)
+
+            let sourceData = $0.contents(atPath: source.path())
+            let destData = $0.contents(atPath: destination.path())
+            #expect(sourceData == destData)
+        }
+    }
+
+    @Test
+    func size_whenDirectoryHasNestedFiles() throws {
+        try FileManagerPlayground {
+            Directory(name: "folder") {
+                File(name: "a.txt", string: "12345")
+                Directory(name: "subfolder") {
+                    File(name: "b.txt", string: "abcde")
+                }
+            }
+        }
+        .test { fileManager, rootUrl in
+            let folder = rootUrl.appending(path: "folder")
+            let fileA = folder.appending(path: "a.txt")
+            let fileB = folder.appending(path: "subfolder/b.txt")
+
+            let aSize = try fileManager.size(at: fileA)
+            let bSize = try fileManager.size(at: fileB)
+
+            #expect(aSize == 5)
+            #expect(bSize == 5)
+
+            // due to file system differences, this won't be a perfect match
+            let expectedSize = 10  // "12345".utf8.count + "abcde".utf8.count
+            let reportedSize = try fileManager.size(at: folder)
+
+            #expect(reportedSize >= expectedSize)
+            // up to 128 KB buffer
+            #expect(reportedSize < expectedSize + 128 * 1024)
+        }
+    }
+
 }
