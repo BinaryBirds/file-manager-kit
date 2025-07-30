@@ -127,7 +127,11 @@ struct FileManagerKitTestSuite {
         try FileManagerPlayground()
             .test {
                 let url = $1.appending(path: "foo")
-                try $0.createFile(at: url, contents: nil)
+                try $0.createFile(
+                    at: url,
+                    contents: nil,
+                    attributes: nil
+                )
 
                 #expect($0.fileExists(at: url))
             }
@@ -142,7 +146,11 @@ struct FileManagerKitTestSuite {
                 #expect(
                     throws: CocoaError(.fileWriteUnknown),
                     performing: {
-                        try fileManager.createFile(at: url, contents: nil)
+                        try fileManager.createFile(
+                            at: url,
+                            contents: nil,
+                            attributes: nil
+                        )
                     }
                 )
             }
@@ -158,7 +166,11 @@ struct FileManagerKitTestSuite {
         .test {
             let url = $1.appending(path: "foo/bar")
             let dataToWrite = "data".data(using: .utf8)
-            try $0.createFile(at: url, contents: dataToWrite)
+            try $0.createFile(
+                at: url,
+                contents: dataToWrite,
+                attributes: nil
+            )
             let data = $0.contents(atPath: url.path(percentEncoded: false))
 
             #expect(dataToWrite == data)
@@ -172,7 +184,10 @@ struct FileManagerKitTestSuite {
         try FileManagerPlayground()
             .test {
                 let url = $1.appending(path: "foo")
-                try $0.createDirectory(at: url)
+                try $0.createDirectory(
+                    at: url,
+                    attributes: nil
+                )
 
                 #expect($0.directoryExists(at: url))
             }
@@ -187,7 +202,10 @@ struct FileManagerKitTestSuite {
         }
         .test {
             let url = $1.appending(path: "foo/bar")
-            try $0.createDirectory(at: url)
+            try $0.createDirectory(
+                at: url,
+                attributes: nil
+            )
 
             #expect($0.directoryExists(at: url))
         }
