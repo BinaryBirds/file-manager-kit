@@ -128,9 +128,7 @@ extension FileManager: FileManagerKit {
     /// - Throws: An error if the directory could not be created.
     public func createDirectory(
         at url: URL,
-        attributes: [FileAttributeKey: Any]? = [
-            .posixPermissions: 0o744
-        ]
+        attributes: [FileAttributeKey: Any]?
     ) throws {
         guard !directoryExists(at: url) else {
             return
@@ -152,7 +150,7 @@ extension FileManager: FileManagerKit {
     public func createFile(
         at url: URL,
         contents: Data?,
-        attributes: [FileAttributeKey: Any]? = nil
+        attributes: [FileAttributeKey: Any]?
     ) throws {
         guard
             createFile(
@@ -192,7 +190,7 @@ extension FileManager: FileManagerKit {
             return
         }
         if !directoryExists(at: outputURL) {
-            try createDirectory(at: outputURL)
+            try createDirectory(at: outputURL, attributes: nil)
         }
 
         for item in listDirectory(at: inputURL) {
