@@ -142,7 +142,7 @@ struct FileManagerKitTestSuite {
         try FileManagerPlayground()
             .test { fileManager, rootUrl in
                 let url = rootUrl.appending(path: "foo/bar/baz")
-                
+
                 #expect(
                     throws: CocoaError(.fileWriteUnknown),
                     performing: {
