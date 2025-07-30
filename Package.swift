@@ -20,15 +20,9 @@ let package = Package(
             targets: ["FileManagerKitBuilder"]
         ),
     ],
-    dependencies: [
-      
-    ],
     targets: [
         .target(
             name: "FileManagerKit",
-            dependencies: [
-                
-            ],
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency=complete"),
             ]
@@ -36,7 +30,7 @@ let package = Package(
         .target(
             name: "FileManagerKitBuilder",
             dependencies: [
-                
+                .target(name: "FileManagerKit"),
             ],
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency=complete"),

@@ -1,10 +1,17 @@
+//
+//  FileManagerKitTestSuite.swift
+//  file-manager-kit
+//
+//  Created by Viasz-Kádi Ferenc on 2025. 04. 01..
+//
+
 import FileManagerKitBuilder
 import Foundation
 import Testing
 
 @testable import FileManagerKit
 
-@Suite(.serialized)
+@Suite
 struct FileManagerKitTestSuite {
 
     // MARK: - exists(at:) Tests
@@ -152,7 +159,7 @@ struct FileManagerKitTestSuite {
             let url = $1.appending(path: "foo/bar")
             let dataToWrite = "data".data(using: .utf8)
             try $0.createFile(at: url, contents: dataToWrite)
-            let data = $0.contents(atPath: url.path())
+            let data = $0.contents(atPath: url.path(percentEncoded: false))
 
             #expect(dataToWrite == data)
         }
@@ -243,7 +250,7 @@ struct FileManagerKitTestSuite {
             Directory(name: "c")
             File(name: ".foo", string: "foo")
             "bar"
-            SymbolicLink(name: "bar_link", destination: "bar")
+            Link(name: "bar_link", target: "bar")
         }
         .test {
             let items = $0.listDirectory(at: $1).sorted()
@@ -272,6 +279,24 @@ struct FileManagerKitTestSuite {
             let url = $1.appending(path: "foo")
             let items = $0.listDirectory(at: url)
             #expect(items == [])
+        }
+    }
+
+    @Test
+    func listDirectory_whenDirectoryNameIsSpecial() throws {
+        try FileManagerPlayground {
+            Directory(name: "a a")
+            Directory(name: "b b")
+            Directory(name: "c c")
+        }
+        .test {
+            let expectation = [
+                "a a",
+                "b b",
+                "c c",
+            ]
+            let items = $0.listDirectory(at: $1).sorted()
+            #expect(items == expectation)
         }
     }
 
@@ -401,7 +426,7 @@ struct FileManagerKitTestSuite {
         .test {
             let source = $1.appending(path: "sourceFile")
             let destination = $1.appending(path: "destination")
-            try $0.link(from: source, to: destination)
+            try $0.softLink(from: source, to: destination)
             let exists = $0.exists(at: destination)
             let attributes = try $0.attributes(at: destination)
             let fileType = attributes[.type] as? FileAttributeType
@@ -418,7 +443,7 @@ struct FileManagerKitTestSuite {
             .test {
                 let source = $1.appending(path: "missingSource")
                 let destination = $1.appending(path: "destination")
-                try $0.link(from: source, to: destination)
+                try $0.softLink(from: source, to: destination)
                 let attributes = try $0.attributes(at: destination)
                 let fileType = attributes[.type] as? FileAttributeType
 
@@ -451,7 +476,7 @@ struct FileManagerKitTestSuite {
             let destination = $1.appending(path: "destination")
 
             do {
-                try $0.link(from: source, to: destination)
+                try $0.softLink(from: source, to: destination)
                 #expect(Bool(false))
             }
             catch let error as NSError {
@@ -642,21 +667,58 @@ struct FileManagerKitTestSuite {
     func listDirectoryRecursively() throws {
         try FileManagerPlayground {
             Directory(name: "foo") {
-                "bap"
                 Directory(name: "bar") {
-                    "beep"
                     Directory(name: "baz") {
                         "boop"
                     }
+                    "beep"
                 }
+                "bap"
             }
         }
         .test {
-            let baseUrlLength = $1.path().count
+            let baseUrlLength = $1.path().count + 1
             let results = $0.listDirectoryRecursively(at: $1)
                 .map { String($0.path().dropFirst(baseUrlLength)) }
                 .sorted()
-            let expected = ["/foo/bap", "/foo/bar/baz/boop", "/foo/bar/beep"]
+            let expected = [
+                "foo/bap",
+                "foo/bar/baz/boop",
+                "foo/bar/beep",
+            ]
+            .sorted()
+            #expect(expected == results)
+        }
+    }
+
+    @Test
+    func listDirectoryRecursivelyWithSpecialCharacters() throws {
+        try FileManagerPlayground {
+            Directory(name: "f oo") {
+                Directory(name: "ba r") {
+                    Directory(name: "b az") {
+                        "bo op"
+                    }
+                    "bee p"
+                }
+                "b ap"
+            }
+        }
+        .test {
+            let baseUrlLength = $1.path().count + 1
+            let results = $0.listDirectoryRecursively(at: $1)
+                .map {
+                    String(
+                        $0.path(percentEncoded: false).dropFirst(baseUrlLength)
+                    )
+                }
+                .sorted()
+            let expected = [
+                "f oo/b ap",
+                "f oo/ba r/bee p",
+                "f oo/ba r/b az/bo op",
+            ]
+            .sorted()
 
             #expect(expected == results)
         }
@@ -679,16 +741,63 @@ struct FileManagerKitTestSuite {
             Directory(name: "to")
         }
         .test {
-            let from = $1.appendingPathComponent("from")
-            let to = $1.appendingPathComponent("to")
+            let from = $1.appending(path: "from")
+            let to = $1.appending(path: "to")
 
             try $0.copyRecursively(from: from, to: to)
 
-            let baseUrlLength = to.path().count
+            let baseUrlLength = to.path().count + 1
             let results = $0.listDirectoryRecursively(at: to)
                 .map { String($0.path().dropFirst(baseUrlLength)) }
                 .sorted()
-            let expected = ["foo/bap", "foo/bar/baz/boop", "foo/bar/beep"]
+
+            let expected = [
+                "foo/bap",
+                "foo/bar/baz/boop",
+                "foo/bar/beep",
+            ]
+            .sorted()
+
+            #expect(expected == results)
+        }
+    }
+
+    @Test
+    func copyDirectoryRecursivelyWithSpecialCharacters() throws {
+        try FileManagerPlayground {
+            Directory(name: "from") {
+                Directory(name: "f oo") {
+                    "bap"
+                    Directory(name: "bar") {
+                        "beep"
+                        Directory(name: "baz") {
+                            "boop"
+                        }
+                    }
+                }
+            }
+            Directory(name: "to")
+        }
+        .test {
+            let from = $1.appending(path: "from")
+            let to = $1.appending(path: "to")
+
+            try $0.copyRecursively(from: from, to: to)
+
+            let baseUrlLength = to.path().count + 1
+            let results = $0.listDirectoryRecursively(at: to)
+                .map {
+                    String(
+                        $0.path(percentEncoded: false).dropFirst(baseUrlLength)
+                    )
+                }
+                .sorted()
+            let expected = [
+                "f oo/bap",
+                "f oo/bar/beep",
+                "f oo/bar/baz/boop",
+            ]
+            .sorted()
 
             #expect(expected == results)
         }
@@ -698,7 +807,7 @@ struct FileManagerKitTestSuite {
     func extraParams() throws {
         let fileManager = FileManager.default
         let rootUrl = fileManager.temporaryDirectory
-        let rootName = "test/"
+        let rootName = "test"
 
         try FileManagerPlayground(
             rootUrl: rootUrl,
@@ -720,19 +829,24 @@ struct FileManagerKitTestSuite {
         }
         .test {
             #expect(
-                rootUrl.appendingPathComponent(rootName).path() == $1.path()
+                $1.pathComponents
+                    == rootUrl.appending(path: rootName).pathComponents
             )
 
-            let from = $1.appendingPathComponent("from")
-            let to = $1.appendingPathComponent("to")
+            let from = $1.appending(path: "from")
+            let to = $1.appending(path: "to")
 
             try $0.copyRecursively(from: from, to: to)
 
-            let baseUrlLength = to.path().count
+            let baseUrlLength = to.path().count + 1
             let results = $0.listDirectoryRecursively(at: to)
                 .map { String($0.path().dropFirst(baseUrlLength)) }
                 .sorted()
-            let expected = ["foo/bap", "foo/bar/baz/boop", "foo/bar/beep"]
+            let expected = [
+                "foo/bap",
+                "foo/bar/baz/boop",
+                "foo/bar/beep",
+            ]
 
             #expect(expected == results)
         }
@@ -750,7 +864,8 @@ struct FileManagerKitTestSuite {
         let fileManager = built.0
         let builtURL = built.1
 
-        let fileURL = builtURL.appendingPathComponent("foo/bar.txt")
+        let fileURL = builtURL.appending(path: "foo/bar")
+            .appendingPathExtension("txt")
 
         #expect(fileManager.fileExists(atPath: fileURL.path()))
 
@@ -758,4 +873,123 @@ struct FileManagerKitTestSuite {
 
         #expect(!fileManager.fileExists(atPath: builtURL.path()))
     }
+
+    @Test
+    func find() throws {
+        try FileManagerPlayground {
+            File(name: "fileA.txt", string: "Test")
+            File(name: ".hidden.md", string: "Hidden")
+            File(name: "readme.md", string: "Readme")
+            Directory(name: "Subdir") {
+                File(name: "nested.swift", string: "Nested")
+            }
+        }
+        .test { fileManager, rootUrl in
+            // Non-recursive, skip hidden
+            let nonRecursive = fileManager.find(
+                at: rootUrl
+            )
+            #expect(nonRecursive.contains("fileA.txt"))
+            #expect(nonRecursive.contains("readme.md"))
+            #expect(!nonRecursive.contains(".hidden.md"))
+            #expect(!nonRecursive.contains("Subdir/nested.swift"))
+
+            // Recursive, skip hidden
+            let recursive = fileManager.find(
+                recursively: true,
+                at: rootUrl
+            )
+            #expect(recursive.contains("fileA.txt"))
+            #expect(recursive.contains("readme.md"))
+            #expect(recursive.contains("Subdir/nested.swift"))
+            #expect(!recursive.contains(".hidden.md"))
+
+            // Filter by name
+            let named = fileManager.find(
+                name: "readme",
+                recursively: true,
+                at: rootUrl
+            )
+            #expect(named.count == 1)
+            #expect(named.first == "readme.md")
+
+            // Filter by extension
+            let mdFiles = fileManager.find(
+                extensions: ["md"],
+                recursively: true,
+                skipHiddenFiles: false,
+                at: rootUrl
+            )
+            #expect(mdFiles.contains("readme.md"))
+            #expect(mdFiles.contains(".hidden.md"))
+
+            // Filter by name and extension
+            let combo = fileManager.find(
+                name: "fileA",
+                extensions: ["txt"],
+                recursively: true,
+                at: rootUrl
+            )
+            #expect(combo.contains("fileA.txt"))
+        }
+    }
+
+    @Test
+    func hardLink_whenSourceExists() throws {
+        try FileManagerPlayground {
+            File(name: "sourceFile", string: "Hello, hardlink!")
+        }
+        .test {
+            let source = $1.appending(path: "sourceFile")
+            let destination = $1.appending(path: "destination")
+
+            try $0.hardLink(from: source, to: destination)
+
+            #expect($0.fileExists(at: destination))
+            let sourceAttributes = try $0.attributes(at: source)
+            let destAttributes = try $0.attributes(at: destination)
+
+            let sourceInode = sourceAttributes[.systemFileNumber] as? UInt64
+            let destInode = destAttributes[.systemFileNumber] as? UInt64
+
+            // Inode numbers should match for a true hard link
+            #expect(sourceInode != nil && sourceInode == destInode)
+
+            let sourceData = $0.contents(atPath: source.path())
+            let destData = $0.contents(atPath: destination.path())
+            #expect(sourceData == destData)
+        }
+    }
+
+    @Test
+    func size_whenDirectoryHasNestedFiles() throws {
+        try FileManagerPlayground {
+            Directory(name: "folder") {
+                File(name: "a.txt", string: "12345")
+                Directory(name: "subfolder") {
+                    File(name: "b.txt", string: "abcde")
+                }
+            }
+        }
+        .test { fileManager, rootUrl in
+            let folder = rootUrl.appending(path: "folder")
+            let fileA = folder.appending(path: "a.txt")
+            let fileB = folder.appending(path: "subfolder/b.txt")
+
+            let aSize = try fileManager.size(at: fileA)
+            let bSize = try fileManager.size(at: fileB)
+
+            #expect(aSize == 5)
+            #expect(bSize == 5)
+
+            // due to file system differences, this won't be a perfect match
+            let expectedSize = 10  // "12345".utf8.count + "abcde".utf8.count
+            let reportedSize = try fileManager.size(at: folder)
+
+            #expect(reportedSize >= expectedSize)
+            // up to 128 KB buffer
+            #expect(reportedSize < expectedSize + 128 * 1024)
+        }
+    }
+
 }

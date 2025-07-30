@@ -1,5 +1,34 @@
 SHELL=/bin/bash
+
 .PHONY: docker
+
+baseUrl = https://raw.githubusercontent.com/BinaryBirds/github-workflows/refs/heads/main/scripts
+
+check: symlinks language deps lint
+
+symlinks:
+	curl -s $(baseUrl)/check-broken-symlinks.sh | bash
+	
+language:
+	curl -s $(baseUrl)/check-unacceptable-language.sh | bash
+	
+deps:
+	curl -s $(baseUrl)/check-local-swift-dependencies.sh | bash
+	
+lint:
+	curl -s $(baseUrl)/run-swift-format.sh | bash
+
+fmt:
+	swiftformat .
+
+format:
+	curl -s $(baseUrl)/run-swift-format.sh | bash -s -- --fix
+
+headers:
+	curl -s $(baseUrl)/check-swift-headers.sh | bash
+
+fix-headers:
+	curl -s $(baseUrl)/check-swift-headers.sh | bash -s -- --fix
 
 build:
 	swift build
@@ -16,11 +45,8 @@ test-with-coverage:
 clean:
 	rm -rf .build
 
-check:
-	./scripts/run-checks.sh
+docker-tests:
+	docker build -t file-manager-kit-tests . -f ./Docker/Dockerfile.testing && docker run --rm file-manager-kit-tests
 
-format:
-	./scripts/run-swift-format.sh --fix
-
-docker:
-	docker build -t file-manager-kit-image . -f ./Docker/Dockerfile.ubuntu && docker run --rm file-manager-kit-image
+docker-run:
+	docker run --rm -v $(pwd):/app -it swift:6.0
