@@ -5,7 +5,11 @@
 //  Created by Viasz-Kádi Ferenc on 2025. 05. 30..
 //
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 
 /// A protocol that abstracts common file system operations, such as checking for file existence,
 /// creating directories or files, copying, moving, deleting, and querying file attributes.

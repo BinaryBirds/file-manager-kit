@@ -5,7 +5,12 @@
 //  Created by Viasz-Kádi Ferenc on 2025. 05. 30..
 //
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
+
 import FileManagerKit
 
 /// A protocol that defines the ability to create or assemble resources at a given file system path.

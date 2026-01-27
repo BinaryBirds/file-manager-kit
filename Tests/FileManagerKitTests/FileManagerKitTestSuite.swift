@@ -5,8 +5,13 @@
 //  Created by Viasz-Kádi Ferenc on 2025. 04. 01..
 //
 
-import FileManagerKitBuilder
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
+
+import FileManagerKitBuilder
 import Testing
 
 @testable import FileManagerKit

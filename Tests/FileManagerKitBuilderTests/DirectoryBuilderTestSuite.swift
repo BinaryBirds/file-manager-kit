@@ -5,9 +5,14 @@
 //  Created by Viasz-Kádi Ferenc on 2025. 04. 01..
 //
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
-import Testing
+#endif
 
+import Testing
+import FileManagerKit
 @testable import FileManagerKitBuilder
 
 @Suite
@@ -127,3 +132,4 @@ struct DirectoryBuilderTestSuite {
         }
     }
 }
+

@@ -5,7 +5,11 @@
 //  Created by Viasz-Kádi Ferenc on 2025. 05. 30..
 //
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 
 #if os(Linux)
 import Glibc
