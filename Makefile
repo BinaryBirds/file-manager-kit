@@ -40,7 +40,7 @@ test:
 	swift test --parallel
 
 docker-test:
-	docker build -t file-manager-kit-tests . -f ./docker/tests/Dockerfile && docker run --rm file-manager-kit-tests
+	docker build -t file-manager-kit-tests . -f ./docker/tests/dockerfile && docker run --rm file-manager-kit-tests
 
 docker-run:
 	docker run --rm -v $(pwd):/app -it swift:6.1
