@@ -1,8 +1,8 @@
 //
 //  FileManagerKitError.swift
+//  file-manager-kit
 //
-//  Created by Binary Birds.
-//
+//  Created by Binary Birds on 2026. 01. 30..
 
 import Foundation
 
