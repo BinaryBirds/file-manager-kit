@@ -72,7 +72,7 @@ public protocol FileManagerKit {
     func createDirectory(
         at url: URL,
         attributes: [FileAttributeKey: Any]?
-    ) throws
+    ) throws(FileManagerKitError)
 
     /// Creates a file at the specified URL with optional contents and attributes.
     ///
@@ -85,7 +85,7 @@ public protocol FileManagerKit {
         at url: URL,
         contents: Data?,
         attributes: [FileAttributeKey: Any]?
-    ) throws
+    ) throws(FileManagerKitError)
 
     /// Copies a file or directory from a source URL to a destination URL.
     ///
@@ -96,7 +96,7 @@ public protocol FileManagerKit {
     func copy(
         from source: URL,
         to destination: URL
-    ) throws
+    ) throws(FileManagerKitError)
 
     /// Recursively copies a directory and its contents from a source URL to a destination URL.
     ///
@@ -107,7 +107,7 @@ public protocol FileManagerKit {
     func copyRecursively(
         from inputURL: URL,
         to outputURL: URL
-    ) throws
+    ) throws(FileManagerKitError)
 
     /// Moves a file or directory from a source URL to a destination URL.
     ///
@@ -118,7 +118,7 @@ public protocol FileManagerKit {
     func move(
         from source: URL,
         to destination: URL
-    ) throws
+    ) throws(FileManagerKitError)
 
     /// Creates a symbolic (soft) link from a source path to a destination path.
     ///
@@ -129,7 +129,7 @@ public protocol FileManagerKit {
     func softLink(
         from source: URL,
         to destination: URL
-    ) throws
+    ) throws(FileManagerKitError)
 
     /// Creates a hard link from a source path to a destination path.
     ///
@@ -140,7 +140,7 @@ public protocol FileManagerKit {
     func hardLink(
         from source: URL,
         to destination: URL
-    ) throws
+    ) throws(FileManagerKitError)
 
     /// Deletes the file, directory, or symbolic link at the specified URL.
     ///
@@ -148,7 +148,7 @@ public protocol FileManagerKit {
     /// - Throws: An error if the item could not be deleted.
     func delete(
         at url: URL
-    ) throws
+    ) throws(FileManagerKitError)
 
     // MARK: -
 
@@ -196,7 +196,7 @@ public protocol FileManagerKit {
     /// - Throws: An error if attributes could not be retrieved.
     func attributes(
         at url: URL
-    ) throws -> [FileAttributeKey: Any]
+    ) throws(FileManagerKitError) -> [FileAttributeKey: Any]
 
     /// Retrieves the POSIX permissions for the file or directory at the specified URL.
     ///
@@ -205,7 +205,7 @@ public protocol FileManagerKit {
     /// - Throws: An error if the permissions could not be retrieved.
     func permissions(
         at url: URL
-    ) throws -> Int
+    ) throws(FileManagerKitError) -> Int
 
     /// Returns the size of the file at the specified URL in bytes.
     ///
@@ -214,7 +214,7 @@ public protocol FileManagerKit {
     /// - Throws: An error if the size could not be retrieved.
     func size(
         at url: URL
-    ) throws -> UInt64
+    ) throws(FileManagerKitError) -> UInt64
 
     /// Retrieves the creation date of the item at the specified URL.
     ///
@@ -223,7 +223,7 @@ public protocol FileManagerKit {
     /// - Throws: An error if the creation date could not be retrieved.
     func creationDate(
         at url: URL
-    ) throws -> Date
+    ) throws(FileManagerKitError) -> Date
 
     /// Retrieves the last modification date of the item at the specified URL.
     ///
@@ -232,7 +232,7 @@ public protocol FileManagerKit {
     /// - Throws: An error if the modification date could not be retrieved.
     func modificationDate(
         at url: URL
-    ) throws -> Date
+    ) throws(FileManagerKitError) -> Date
 
     /// Sets the file attributes at the specified URL.
     ///
@@ -243,7 +243,7 @@ public protocol FileManagerKit {
     func setAttributes(
         _ attributes: [FileAttributeKey: Any],
         at url: URL
-    ) throws
+    ) throws(FileManagerKitError)
 
     /// Sets the POSIX file permissions at the specified URL.
     ///
@@ -254,5 +254,5 @@ public protocol FileManagerKit {
     func setPermissions(
         _ permission: Int,
         at url: URL
-    ) throws
+    ) throws(FileManagerKitError)
 }

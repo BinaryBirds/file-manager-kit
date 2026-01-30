@@ -45,6 +45,16 @@ private extension URL {
     }
 }
 
+private extension String {
+    #if canImport(FoundationEssentials)
+    var fmkit_removingPercentEncoding: String { self }
+    #else
+    var fmkit_removingPercentEncoding: String {
+        self.removingPercentEncoding ?? self
+    }
+    #endif
+}
+
 extension FileManager: FileManagerKit {
 
     // MARK: -
@@ -70,6 +80,15 @@ extension FileManager: FileManagerKit {
     public func directoryExists(
         at url: URL
     ) -> Bool {
+        #if canImport(FoundationEssentials)
+        var isDirectory = false
+        if fileExists(
+            atPath: url.path(percentEncoded: false),
+            isDirectory: &isDirectory
+        ) {
+            return isDirectory
+        }
+        #else
         var isDirectory = ObjCBool(false)
         if fileExists(
             atPath: url.path(percentEncoded: false),
@@ -77,6 +96,7 @@ extension FileManager: FileManagerKit {
         ) {
             return isDirectory.boolValue
         }
+        #endif
         return false
     }
 
@@ -87,6 +107,17 @@ extension FileManager: FileManagerKit {
     public func fileExists(
         at url: URL
     ) -> Bool {
+        #if canImport(FoundationEssentials)
+        var isDirectory = false
+        if fileExists(
+            atPath: url.path(
+                percentEncoded: false
+            ),
+            isDirectory: &isDirectory
+        ) {
+            return !isDirectory
+        }
+        #else
         var isDirectory = ObjCBool(false)
         if fileExists(
             atPath: url.path(
@@ -96,6 +127,7 @@ extension FileManager: FileManagerKit {
         ) {
             return !isDirectory.boolValue
         }
+        #endif
         return false
     }
 
@@ -133,15 +165,20 @@ extension FileManager: FileManagerKit {
     public func createDirectory(
         at url: URL,
         attributes: [FileAttributeKey: Any]?
-    ) throws {
+    ) throws(FileManagerKitError) {
         guard !directoryExists(at: url) else {
             return
         }
-        try createDirectory(
-            atPath: url.path(percentEncoded: false),
-            withIntermediateDirectories: true,
-            attributes: attributes
-        )
+        do {
+            try createDirectory(
+                atPath: url.path(percentEncoded: false),
+                withIntermediateDirectories: true,
+                attributes: attributes
+            )
+        }
+        catch {
+            throw .directoryCreateFailed(url: url, underlying: error)
+        }
     }
 
     /// Creates a file at the specified URL with optional contents and attributes.
@@ -155,7 +192,7 @@ extension FileManager: FileManagerKit {
         at url: URL,
         contents: Data?,
         attributes: [FileAttributeKey: Any]?
-    ) throws {
+    ) throws(FileManagerKitError) {
         guard
             createFile(
                 atPath: url.path(percentEncoded: false),
@@ -163,7 +200,7 @@ extension FileManager: FileManagerKit {
                 attributes: attributes
             )
         else {
-            throw CocoaError(.fileWriteUnknown)
+            throw .fileCreateFailed(url: url)
         }
     }
 
@@ -176,8 +213,17 @@ extension FileManager: FileManagerKit {
     public func copy(
         from source: URL,
         to destination: URL
-    ) throws {
-        try copyItem(at: source, to: destination)
+    ) throws(FileManagerKitError) {
+        do {
+            try copyItem(at: source, to: destination)
+        }
+        catch {
+            throw .copyFailed(
+                source: source,
+                destination: destination,
+                underlying: error
+            )
+        }
     }
 
     /// Recursively copies a directory and its contents from a source URL to a destination URL.
@@ -189,7 +235,7 @@ extension FileManager: FileManagerKit {
     public func copyRecursively(
         from inputURL: URL,
         to outputURL: URL
-    ) throws {
+    ) throws(FileManagerKitError) {
         guard directoryExists(at: inputURL) else {
             return
         }
@@ -198,7 +244,7 @@ extension FileManager: FileManagerKit {
         }
 
         for item in listDirectory(at: inputURL) {
-            let path = item.removingPercentEncoding ?? item
+            let path = item.fmkit_removingPercentEncoding
             let itemSourceUrl = inputURL.appending(path: path)
             let itemDestinationUrl = outputURL.appending(path: path)
             if fileExists(at: itemSourceUrl) {
@@ -222,8 +268,17 @@ extension FileManager: FileManagerKit {
     public func move(
         from source: URL,
         to destination: URL
-    ) throws {
-        try moveItem(at: source, to: destination)
+    ) throws(FileManagerKitError) {
+        do {
+            try moveItem(at: source, to: destination)
+        }
+        catch {
+            throw .moveFailed(
+                source: source,
+                destination: destination,
+                underlying: error
+            )
+        }
     }
 
     /// Creates a symbolic (soft) link from a source path to a destination path.
@@ -235,11 +290,20 @@ extension FileManager: FileManagerKit {
     public func softLink(
         from source: URL,
         to destination: URL
-    ) throws {
-        try createSymbolicLink(
-            at: destination,
-            withDestinationURL: source
-        )
+    ) throws(FileManagerKitError) {
+        do {
+            try createSymbolicLink(
+                at: destination,
+                withDestinationURL: source
+            )
+        }
+        catch {
+            throw .copyFailed(
+                source: source,
+                destination: destination,
+                underlying: error
+            )
+        }
     }
 
     /// Creates a hard link from a source path to a destination path.
@@ -251,16 +315,30 @@ extension FileManager: FileManagerKit {
     public func hardLink(
         from source: URL,
         to destination: URL
-    ) throws {
-        try linkItem(at: source, to: destination)
+    ) throws(FileManagerKitError) {
+        do {
+            try linkItem(at: source, to: destination)
+        }
+        catch {
+            throw .copyFailed(
+                source: source,
+                destination: destination,
+                underlying: error
+            )
+        }
     }
 
     /// Deletes the file, directory, or symbolic link at the specified URL.
     ///
     /// - Parameter url: The URL of the item to delete.
     /// - Throws: An error if the item could not be deleted.
-    public func delete(at url: URL) throws {
-        try removeItem(at: url)
+    public func delete(at url: URL) throws(FileManagerKitError) {
+        do {
+            try removeItem(at: url)
+        }
+        catch {
+            throw .deleteFailed(url: url, underlying: error)
+        }
     }
 
     // MARK: -
@@ -361,12 +439,17 @@ extension FileManager: FileManagerKit {
     /// - Throws: An error if attributes could not be retrieved.
     public func attributes(
         at url: URL
-    ) throws -> [FileAttributeKey: Any] {
-        try attributesOfItem(
-            atPath: url.path(
-                percentEncoded: false
+    ) throws(FileManagerKitError) -> [FileAttributeKey: Any] {
+        do {
+            return try attributesOfItem(
+                atPath: url.path(
+                    percentEncoded: false
+                )
             )
-        )
+        }
+        catch {
+            throw .attributesReadFailed(url: url, underlying: error)
+        }
     }
 
     /// Retrieves the POSIX permissions for the file or directory at the specified URL.
@@ -376,9 +459,22 @@ extension FileManager: FileManagerKit {
     /// - Throws: An error if the permissions could not be retrieved.
     public func permissions(
         at url: URL
-    ) throws -> Int {
-        let attributes = try attributes(at: url)
-        return attributes[.posixPermissions] as! Int
+    ) throws(FileManagerKitError) -> Int {
+        let attrs = try attributes(at: url)
+
+        guard let raw = attrs[.posixPermissions] else {
+            throw .missingAttribute(url: url, key: .posixPermissions)
+        }
+        if let int = raw as? Int {
+            return int
+        }
+
+        throw .invalidAttributeType(
+            url: url,
+            key: .posixPermissions,
+            expected: "Int",
+            actual: String(describing: type(of: raw))
+        )
     }
 
     /// Returns the size of the file at the specified URL in bytes.
@@ -388,37 +484,59 @@ extension FileManager: FileManagerKit {
     /// - Throws: An error if the size could not be retrieved.
     public func size(
         at url: URL
-    ) throws -> UInt64 {
+    ) throws(FileManagerKitError) -> UInt64 {
         if fileExists(at: url) {
             let attributes = try attributes(at: url)
-            let size = attributes[.size] as! NSNumber
-            return size.uint64Value
-        }
-        let keys: Set<URLResourceKey> = [
-            .isRegularFileKey,
-            .fileAllocatedSizeKey,
-            .totalFileAllocatedSizeKey,
-        ]
-        guard
-            let enumerator = enumerator(
-                at: url,
-                includingPropertiesForKeys: Array(keys)
-            )
-        else {
+            if let intSize = attributes[.size] as? Int {
+                return UInt64(intSize)
+            }
+            if let int64Size = attributes[.size] as? Int64 {
+                return UInt64(int64Size)
+            }
+            #if !canImport(FoundationEssentials)
+            if let num = attributes[.size] as? NSNumber {
+                return num.uint64Value
+            }
+            #endif
             return 0
         }
 
-        var size: UInt64 = 0
-        for item in enumerator.compactMap({ $0 as? URL }) {
-            let values = try item.resourceValues(forKeys: keys)
-            guard values.isRegularFile ?? false else {
-                continue
+        var total: UInt64 = 0
+        let all = listDirectoryRecursively(at: url)
+        for fileURL in all {
+            if fileExists(at: fileURL) {
+                #if !canImport(FoundationEssentials)
+                let keys: [URLResourceKey] = [
+                    .totalFileAllocatedSizeKey, .fileAllocatedSizeKey,
+                ]
+                if let values = try? fileURL.resourceValues(forKeys: Set(keys))
+                {
+                    if let s = values.totalFileAllocatedSize
+                        ?? values.fileAllocatedSize
+                    {
+                        total += UInt64(s)
+                        continue
+                    }
+                }
+                #endif
+                if let attrs = try? attributes(at: fileURL) {
+                    if let intSize = attrs[.size] as? Int {
+                        total += UInt64(intSize)
+                    }
+                    else if let int64Size = attrs[.size] as? Int64 {
+                        total += UInt64(int64Size)
+                    }
+                    else {
+                        #if !canImport(FoundationEssentials)
+                        if let num = attrs[.size] as? NSNumber {
+                            total += num.uint64Value
+                        }
+                        #endif
+                    }
+                }
             }
-            size += UInt64(
-                values.totalFileAllocatedSize ?? values.fileAllocatedSize ?? 0
-            )
         }
-        return size
+        return total
     }
 
     /// Retrieves the creation date of the item at the specified URL.
@@ -428,10 +546,18 @@ extension FileManager: FileManagerKit {
     /// - Throws: An error if the creation date could not be retrieved.
     public func creationDate(
         at url: URL
-    ) throws -> Date {
+    ) throws(FileManagerKitError) -> Date {
         let attr = try attributes(at: url)
+
+        if let d = attr[.creationDate] as? Date {
+            return d
+        }
         // On Linux, we return the modification date, since no .creationDate
-        return attr[.creationDate] as? Date ?? attr[.modificationDate] as! Date
+        if let d = attr[.modificationDate] as? Date {
+            return d
+        }
+
+        throw .missingAttribute(url: url, key: .creationDate)
     }
 
     /// Retrieves the last modification date of the item at the specified URL.
@@ -441,9 +567,22 @@ extension FileManager: FileManagerKit {
     /// - Throws: An error if the modification date could not be retrieved.
     public func modificationDate(
         at url: URL
-    ) throws -> Date {
+    ) throws(FileManagerKitError) -> Date {
         let attr = try attributes(at: url)
-        return attr[.modificationDate] as! Date
+
+        guard let raw = attr[.modificationDate] else {
+            throw .missingAttribute(url: url, key: .modificationDate)
+        }
+        if let d = raw as? Date {
+            return d
+        }
+
+        throw .invalidAttributeType(
+            url: url,
+            key: .modificationDate,
+            expected: "Date",
+            actual: String(describing: type(of: raw))
+        )
     }
 
     // MARK: -
@@ -457,13 +596,18 @@ extension FileManager: FileManagerKit {
     public func setAttributes(
         _ attributes: [FileAttributeKey: Any],
         at url: URL
-    ) throws {
-        try setAttributes(
-            attributes,
-            ofItemAtPath: url.path(
-                percentEncoded: false
+    ) throws(FileManagerKitError) {
+        do {
+            try setAttributes(
+                attributes,
+                ofItemAtPath: url.path(
+                    percentEncoded: false
+                )
             )
-        )
+        }
+        catch {
+            throw .attributesWriteFailed(url: url, underlying: error)
+        }
     }
 
     /// Sets the POSIX file permissions at the specified URL.
@@ -475,7 +619,7 @@ extension FileManager: FileManagerKit {
     public func setPermissions(
         _ permission: Int,
         at url: URL
-    ) throws {
+    ) throws(FileManagerKitError) {
         try setAttributes([.posixPermissions: permission], at: url)
     }
 
