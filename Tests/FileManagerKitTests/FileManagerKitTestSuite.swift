@@ -5,8 +5,13 @@
 //  Created by Viasz-Kádi Ferenc on 2025. 04. 01..
 //
 
-import FileManagerKitBuilder
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
+
+import FileManagerKitBuilder
 import Testing
 
 @testable import FileManagerKit
@@ -144,7 +149,7 @@ struct FileManagerKitTestSuite {
                 let url = rootUrl.appending(path: "foo/bar/baz")
 
                 #expect(
-                    throws: CocoaError(.fileWriteUnknown),
+                    throws: FileManagerKitError.self,
                     performing: {
                         try fileManager.createFile(
                             at: url,
@@ -249,11 +254,15 @@ struct FileManagerKitTestSuite {
 
                 do {
                     try $0.delete(at: url)
-                    #expect(Bool(false))
+                    Issue.record("Expected error was not thrown")
                 }
-                catch let error as NSError {
-                    #expect(error.domain == NSCocoaErrorDomain)
-                    #expect(error.code == 4)
+                catch let error as FileManagerKitError {
+                    switch error {
+                    case .deleteFailed:
+                        return
+                    default:
+                        Issue.record("Unexpected error type")
+                    }
                 }
             }
     }
@@ -347,11 +356,15 @@ struct FileManagerKitTestSuite {
 
                 do {
                     try $0.copy(from: source, to: destination)
-                    #expect(Bool(false))
+                    Issue.record("Expected error was not thrown")
                 }
-                catch let error as NSError {
-                    #expect(error.domain == NSCocoaErrorDomain)
-                    #expect(error.code == 260)
+                catch let error as FileManagerKitError {
+                    switch error {
+                    case .copyFailed:
+                        return
+                    default:
+                        Issue.record("Unexpected error type")
+                    }
                 }
             }
     }
@@ -368,11 +381,15 @@ struct FileManagerKitTestSuite {
 
             do {
                 try $0.copy(from: source, to: destination)
-                #expect(Bool(false))
+                Issue.record("Expected error was not thrown")
             }
-            catch let error as NSError {
-                #expect(error.domain == NSCocoaErrorDomain)
-                #expect(error.code == 516)
+            catch let error as FileManagerKitError {
+                switch error {
+                case .copyFailed:
+                    return
+                default:
+                    Issue.record("Unexpected error type")
+                }
             }
         }
     }
@@ -404,11 +421,15 @@ struct FileManagerKitTestSuite {
 
                 do {
                     try $0.move(from: source, to: destination)
-                    #expect(Bool(false))
+                    Issue.record("Expected error was not thrown")
                 }
-                catch let error as NSError {
-                    #expect(error.domain == NSCocoaErrorDomain)
-                    #expect(error.code == 4)
+                catch let error as FileManagerKitError {
+                    switch error {
+                    case .moveFailed:
+                        return
+                    default:
+                        Issue.record("Unexpected error type")
+                    }
                 }
             }
     }
@@ -425,11 +446,15 @@ struct FileManagerKitTestSuite {
 
             do {
                 try $0.move(from: source, to: destination)
-                #expect(Bool(false))
+                Issue.record("Expected error was not thrown")
             }
-            catch let error as NSError {
-                #expect(error.domain == NSCocoaErrorDomain)
-                #expect(error.code == 516)
+            catch let error as FileManagerKitError {
+                switch error {
+                case .moveFailed:
+                    return
+                default:
+                    Issue.record("Unexpected error type")
+                }
             }
         }
     }
@@ -495,11 +520,15 @@ struct FileManagerKitTestSuite {
 
             do {
                 try $0.softLink(from: source, to: destination)
-                #expect(Bool(false))
+                Issue.record("Expected error was not thrown")
             }
-            catch let error as NSError {
-                #expect(error.domain == NSCocoaErrorDomain)
-                #expect(error.code == 516)
+            catch let error as FileManagerKitError {
+                switch error {
+                case .copyFailed:
+                    return
+                default:
+                    Issue.record("Unexpected error type")
+                }
             }
         }
     }
@@ -533,11 +562,15 @@ struct FileManagerKitTestSuite {
 
                 do {
                     _ = try $0.creationDate(at: file)
-                    #expect(Bool(false))
+                    Issue.record("Expected error was not thrown")
                 }
-                catch let error as NSError {
-                    #expect(error.domain == NSCocoaErrorDomain)
-                    #expect(error.code == 260)
+                catch let error as FileManagerKitError {
+                    switch error {
+                    case .attributesReadFailed:
+                        return
+                    default:
+                        Issue.record("Unexpected error type")
+                    }
                 }
             }
     }
@@ -567,11 +600,15 @@ struct FileManagerKitTestSuite {
 
                 do {
                     _ = try $0.modificationDate(at: file)
-                    #expect(Bool(false))
+                    Issue.record("Expected error was not thrown")
                 }
-                catch let error as NSError {
-                    #expect(error.domain == NSCocoaErrorDomain)
-                    #expect(error.code == 260)
+                catch let error as FileManagerKitError {
+                    switch error {
+                    case .attributesReadFailed:
+                        return
+                    default:
+                        Issue.record("Unexpected error type")
+                    }
                 }
             }
     }
@@ -637,11 +674,15 @@ struct FileManagerKitTestSuite {
                         .modificationDate: Date()
                     ]
                     try $0.setAttributes(attributes, at: url)
-                    #expect(Bool(false))
+                    Issue.record("Expected error was not thrown")
                 }
-                catch let error as NSError {
-                    #expect(error.domain == NSCocoaErrorDomain)
-                    #expect(error.code == 4)
+                catch let error as FileManagerKitError {
+                    switch error {
+                    case .attributesWriteFailed:
+                        return
+                    default:
+                        Issue.record("Unexpected error type")
+                    }
                 }
             }
     }
@@ -672,11 +713,15 @@ struct FileManagerKitTestSuite {
 
                 do {
                     try $0.setPermissions(600, at: url)
-                    #expect(Bool(false))
+                    Issue.record("Expected error was not thrown")
                 }
-                catch let error as NSError {
-                    #expect(error.domain == NSCocoaErrorDomain)
-                    #expect(error.code == 4)
+                catch let error as FileManagerKitError {
+                    switch error {
+                    case .attributesWriteFailed:
+                        return
+                    default:
+                        Issue.record("Unexpected error type")
+                    }
                 }
             }
     }

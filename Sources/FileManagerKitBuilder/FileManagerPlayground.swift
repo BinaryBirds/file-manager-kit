@@ -5,7 +5,12 @@
 //  Created by Viasz-Kádi Ferenc on 2025. 05. 30..
 //
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
+
 import FileManagerKit
 
 /// A utility type for creating, testing, and cleaning up temporary file system hierarchies using `FileManager`.

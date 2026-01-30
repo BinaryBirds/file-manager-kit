@@ -5,9 +5,14 @@
 //  Created by Viasz-Kádi Ferenc on 2025. 05. 30..
 //
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
+
 import FileManagerKit
 import FileManagerKitBuilder
-import Foundation
 
 /// A `BuildableItem` that generates a `.json` file from any `Encodable` type.
 ///
