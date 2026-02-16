@@ -11,7 +11,7 @@ var defaultSwiftSettings: [SwiftSetting] =
     // https://forums.swift.org/t/experimental-support-for-lifetime-dependencies-in-swift-6-2-and-beyond/78638
     .enableExperimentalFeature("Lifetimes"),
     // https://github.com/swiftlang/swift/pull/65218
-    .enableExperimentalFeature("AvailabilityMacro=featherDatabase 1.0:macOS 15.0, iOS 18.0, tvOS 18.0, watchOS 11.0, visionOS 2.0"),
+    .enableExperimentalFeature("AvailabilityMacro=fileManagerKit 1.0:macOS 15.0, iOS 18.0, tvOS 18.0, watchOS 11.0, visionOS 2.0"),
 ]
 
 #if compiler(>=6.2)
@@ -42,10 +42,14 @@ let package = Package(
     ],
     dependencies: [
         // [docc-plugin-placeholder]
+        .package(url: "https://github.com/apple/swift-nio", from: "2.90.0"),
     ],
     targets: [
         .target(
             name: "FileManagerKit",
+            dependencies: [
+                .product(name: "_NIOFileSystem", package: "swift-nio"),
+            ],
             swiftSettings: defaultSwiftSettings
 
         ),
